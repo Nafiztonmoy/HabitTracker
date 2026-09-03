@@ -1,0 +1,55 @@
+# Frontend
+frontend/habit-tracker-client/node_modules/
+frontend/habit-tracker-client/build/
+
+# Environment files
+frontend/habit-tracker-client/.env
+frontend/habit-tracker-client/.env.local
+frontend/habit-tracker-client/.env.development.local
+frontend/habit-tracker-client/.env.test.local
+frontend/habit-tracker-client/.env.production.local
+
+# Keep example env
+!frontend/habit-tracker-client/.env.example
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+
+# ASP.NET
+**/bin/
+**/obj/
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# JetBrains
+.idea/
+
+# VS Code
+.vscode/
+
+# Local databases
+*.db
+*.db-shm
+*.db-wal
+
+# Local secrets
+secrets.json
+appsettings.Local.json
+appsettings.Production.local.json
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# OAuth / credential downloads
+client secret *.txt
+client_secret*.json
+credentials*.json
