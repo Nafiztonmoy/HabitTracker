@@ -6,7 +6,6 @@ import React, {
 } from "react";
 
 import { FcGoogle } from "react-icons/fc";
-import { PiFacebookLogoBold } from "react-icons/pi";
 import { useNavigate } from "react-router-dom";
 
 import { useAuth } from "../context/AuthContext";
@@ -14,9 +13,6 @@ import { authAPI } from "../services/api";
 
 const GOOGLE_SCRIPT =
   "https://accounts.google.com/gsi/client";
-
-const FACEBOOK_SCRIPT =
-  "https://connect.facebook.net/en_US/sdk.js";
 
 const loadScript = (src, id, readyCheck) =>
   new Promise((resolve, reject) => {
@@ -83,7 +79,6 @@ const SocialAuthButtons = ({
   const googleCodeClientRef = useRef(null);
 
   const [googleReady, setGoogleReady] = useState(false);
-  const [facebookReady, setFacebookReady] = useState(false);
   const [providerLoading, setProviderLoading] = useState("");
 
   const { login } = useAuth();
@@ -92,20 +87,9 @@ const SocialAuthButtons = ({
   const googleClientId =
     process.env.REACT_APP_GOOGLE_CLIENT_ID?.trim();
 
-  const facebookAppId =
-    process.env.REACT_APP_FACEBOOK_APP_ID?.trim();
-
-  const facebookApiVersion =
-    process.env.REACT_APP_FACEBOOK_API_VERSION?.trim() ||
-    "v25.0";
-
   const googleEnabled =
     Boolean(googleClientId) &&
     googleClientId !== "your-google-client-id";
-
-  const facebookEnabled =
-    Boolean(facebookAppId) &&
-    facebookAppId !== "your-facebook-app-id";
 
   const finishAuth = useCallback(
     (response) => {
@@ -122,36 +106,27 @@ const SocialAuthButtons = ({
   );
 
   const exchangeCredential = useCallback(
-    async (provider, credential) => {
+    async (credential) => {
       if (!credential || disabled) return;
 
-      setProviderLoading(provider);
+      setProviderLoading("google");
       onError?.("");
 
       try {
-        const response =
-          provider === "google"
-            ? await authAPI.google({
-                credential,
-              })
-            : await authAPI.facebook({
-                credential,
-              });
+        const response = await authAPI.google({
+          credential,
+        });
 
         finishAuth(response);
       } catch (error) {
         console.error(
-          `${provider} authentication failed:`,
+          "Google authentication failed:",
           error
         );
 
         onError?.(
           error.response?.data?.message ||
-            `${
-              provider === "google"
-                ? "Google"
-                : "Facebook"
-            } sign-in could not be completed.`
+            "Google sign-in could not be completed."
         );
       } finally {
         setProviderLoading("");
@@ -160,7 +135,6 @@ const SocialAuthButtons = ({
     [disabled, finishAuth, onError]
   );
 
-  // Google OAuth code client
   useEffect(() => {
     if (!googleEnabled) {
       setGoogleReady(false);
@@ -202,10 +176,7 @@ const SocialAuthButtons = ({
               }
 
               if (response?.code) {
-                exchangeCredential(
-                  "google",
-                  response.code
-                );
+                exchangeCredential(response.code);
               }
             },
 
@@ -249,60 +220,6 @@ const SocialAuthButtons = ({
     onError,
   ]);
 
-  // Facebook SDK
-  useEffect(() => {
-    if (!facebookEnabled) {
-      setFacebookReady(false);
-      return undefined;
-    }
-
-    let cancelled = false;
-
-    loadScript(
-      FACEBOOK_SCRIPT,
-      "facebook-jssdk",
-      () => Boolean(window.FB)
-    )
-      .then(() => {
-        if (
-          cancelled ||
-          !window.FB
-        ) {
-          return;
-        }
-
-        window.FB.init({
-          appId: facebookAppId,
-          cookie: true,
-          xfbml: false,
-          version: facebookApiVersion,
-        });
-
-        setFacebookReady(true);
-      })
-      .catch((error) => {
-        console.error(
-          "Facebook SDK failed to load:",
-          error
-        );
-
-        setFacebookReady(false);
-
-        onError?.(
-          "Facebook sign-in could not be loaded."
-        );
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [
-    facebookApiVersion,
-    facebookAppId,
-    facebookEnabled,
-    onError,
-  ]);
-
   const handleGoogle = () => {
     if (
       !googleCodeClientRef.current ||
@@ -318,45 +235,7 @@ const SocialAuthButtons = ({
     googleCodeClientRef.current.requestCode();
   };
 
-  const handleFacebook = () => {
-    if (
-      !window.FB ||
-      !facebookReady ||
-      disabled ||
-      providerLoading
-    ) {
-      return;
-    }
-
-    onError?.("");
-
-    window.FB.login(
-      (response) => {
-        const accessToken =
-          response.authResponse?.accessToken;
-
-        if (accessToken) {
-          exchangeCredential(
-            "facebook",
-            accessToken
-          );
-        } else {
-          onError?.(
-            "Facebook sign-in was cancelled or not authorized."
-          );
-        }
-      },
-      {
-        scope: "public_profile,email",
-        return_scopes: true,
-      }
-    );
-  };
-
-  if (
-    !googleEnabled &&
-    !facebookEnabled
-  ) {
+  if (!googleEnabled) {
     return null;
   }
 
@@ -376,43 +255,20 @@ const SocialAuthButtons = ({
       </div>
 
       <div className="auth-social-stack">
+        <button
+          type="button"
+          className="auth-social-button auth-google-button"
+          onClick={handleGoogle}
+          disabled={!googleReady || busy}
+        >
+          <FcGoogle aria-hidden="true" />
 
-        {googleEnabled && (
-          <button
-            type="button"
-            className="auth-social-button auth-google-button"
-            onClick={handleGoogle}
-            disabled={!googleReady || busy}
-          >
-            <FcGoogle aria-hidden="true" />
-
-            <span>
-              {providerLoading === "google"
-                ? "Connecting..."
-                : "Continue with Google"}
-            </span>
-          </button>
-        )}
-
-        {facebookEnabled && (
-          <button
-            type="button"
-            className="auth-social-button auth-facebook-button"
-            onClick={handleFacebook}
-            disabled={!facebookReady || busy}
-          >
-            <PiFacebookLogoBold
-              aria-hidden="true"
-            />
-
-            <span>
-              {providerLoading === "facebook"
-                ? "Connecting..."
-                : "Continue with Facebook"}
-            </span>
-          </button>
-        )}
-
+          <span>
+            {providerLoading === "google"
+              ? "Connecting..."
+              : "Continue with Google"}
+          </span>
+        </button>
       </div>
     </div>
   );
