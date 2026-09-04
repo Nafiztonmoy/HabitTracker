@@ -1,4 +1,4 @@
-using HabitTracker.Models;
+﻿using HabitTracker.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace HabitTracker.Data
@@ -40,7 +40,7 @@ namespace HabitTracker.Data
                     .IsRequired();
 
                 entity.Property(u => u.CreatedAt)
-                    .HasDefaultValueSql("GETUTCDATE()")
+                    .HasDefaultValueSql("CURRENT_TIMESTAMP")
                     .IsRequired();
 
                 // Unique index on Email (case-insensitive lookup)
@@ -106,7 +106,7 @@ namespace HabitTracker.Data
                     .HasMaxLength(500);
 
                 entity.Property(h => h.CreatedAt)
-                    .HasDefaultValueSql("GETUTCDATE()")
+                    .HasDefaultValueSql("CURRENT_TIMESTAMP")
                     .IsRequired();
 
                 entity.Property(h => h.TargetType)

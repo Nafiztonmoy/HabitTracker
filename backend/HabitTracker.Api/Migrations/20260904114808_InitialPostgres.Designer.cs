@@ -5,58 +5,101 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
 namespace HabitTracker.Api.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260808204711_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20260904114808_InitialPostgres")]
+    partial class InitialPostgres
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "8.0.0");
+            modelBuilder
+                .HasAnnotation("ProductVersion", "8.0.11")
+                .HasAnnotation("Relational:MaxIdentifierLength", 63);
+
+            NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+
+            modelBuilder.Entity("HabitTracker.Models.ExternalLogin", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Provider")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("ProviderUserId")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("IX_ExternalLogins_UserId");
+
+                    b.HasIndex("Provider", "ProviderUserId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_ExternalLogins_Provider_ProviderUserId");
+
+                    b.ToTable("ExternalLogins");
+                });
 
             modelBuilder.Entity("HabitTracker.Models.Habit", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Color")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("character varying(50)");
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT")
-                        .HasDefaultValueSql("GETUTCDATE()");
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                     b.Property<string>("Description")
                         .HasMaxLength(500)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("character varying(500)");
 
                     b.Property<string>("Icon")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("character varying(50)");
 
                     b.Property<string>("TargetType")
                         .IsRequired()
                         .HasMaxLength(10)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("character varying(10)");
 
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(200)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("character varying(200)");
 
                     b.Property<int>("UserId")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -105,18 +148,20 @@ namespace HabitTracker.Api.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<bool>("Completed")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER")
+                        .HasColumnType("boolean")
                         .HasDefaultValue(false);
 
                     b.Property<DateTime>("Date")
                         .HasColumnType("date");
 
                     b.Property<int>("HabitId")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -134,147 +179,147 @@ namespace HabitTracker.Api.Migrations
                         {
                             Id = 1,
                             Completed = true,
-                            Date = new DateTime(2026, 8, 2, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Date = new DateTime(2026, 8, 29, 0, 0, 0, 0, DateTimeKind.Utc),
                             HabitId = 1
                         },
                         new
                         {
                             Id = 2,
                             Completed = false,
-                            Date = new DateTime(2026, 8, 3, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Date = new DateTime(2026, 8, 30, 0, 0, 0, 0, DateTimeKind.Utc),
                             HabitId = 1
                         },
                         new
                         {
                             Id = 3,
                             Completed = true,
-                            Date = new DateTime(2026, 8, 4, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Date = new DateTime(2026, 8, 31, 0, 0, 0, 0, DateTimeKind.Utc),
                             HabitId = 1
                         },
                         new
                         {
                             Id = 4,
                             Completed = true,
-                            Date = new DateTime(2026, 8, 5, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Date = new DateTime(2026, 9, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             HabitId = 1
                         },
                         new
                         {
                             Id = 5,
                             Completed = false,
-                            Date = new DateTime(2026, 8, 6, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Date = new DateTime(2026, 9, 2, 0, 0, 0, 0, DateTimeKind.Utc),
                             HabitId = 1
                         },
                         new
                         {
                             Id = 6,
                             Completed = true,
-                            Date = new DateTime(2026, 8, 7, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Date = new DateTime(2026, 9, 3, 0, 0, 0, 0, DateTimeKind.Utc),
                             HabitId = 1
                         },
                         new
                         {
                             Id = 7,
                             Completed = true,
-                            Date = new DateTime(2026, 8, 8, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Date = new DateTime(2026, 9, 4, 0, 0, 0, 0, DateTimeKind.Utc),
                             HabitId = 1
                         },
                         new
                         {
                             Id = 8,
                             Completed = true,
-                            Date = new DateTime(2026, 8, 2, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Date = new DateTime(2026, 8, 29, 0, 0, 0, 0, DateTimeKind.Utc),
                             HabitId = 2
                         },
                         new
                         {
                             Id = 9,
                             Completed = true,
-                            Date = new DateTime(2026, 8, 3, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Date = new DateTime(2026, 8, 30, 0, 0, 0, 0, DateTimeKind.Utc),
                             HabitId = 2
                         },
                         new
                         {
                             Id = 10,
                             Completed = true,
-                            Date = new DateTime(2026, 8, 4, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Date = new DateTime(2026, 8, 31, 0, 0, 0, 0, DateTimeKind.Utc),
                             HabitId = 2
                         },
                         new
                         {
                             Id = 11,
                             Completed = true,
-                            Date = new DateTime(2026, 8, 5, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Date = new DateTime(2026, 9, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             HabitId = 2
                         },
                         new
                         {
                             Id = 12,
                             Completed = true,
-                            Date = new DateTime(2026, 8, 6, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Date = new DateTime(2026, 9, 2, 0, 0, 0, 0, DateTimeKind.Utc),
                             HabitId = 2
                         },
                         new
                         {
                             Id = 13,
                             Completed = true,
-                            Date = new DateTime(2026, 8, 7, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Date = new DateTime(2026, 9, 3, 0, 0, 0, 0, DateTimeKind.Utc),
                             HabitId = 2
                         },
                         new
                         {
                             Id = 14,
                             Completed = true,
-                            Date = new DateTime(2026, 8, 8, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Date = new DateTime(2026, 9, 4, 0, 0, 0, 0, DateTimeKind.Utc),
                             HabitId = 2
                         },
                         new
                         {
                             Id = 15,
                             Completed = false,
-                            Date = new DateTime(2026, 8, 2, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Date = new DateTime(2026, 8, 29, 0, 0, 0, 0, DateTimeKind.Utc),
                             HabitId = 3
                         },
                         new
                         {
                             Id = 16,
                             Completed = false,
-                            Date = new DateTime(2026, 8, 3, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Date = new DateTime(2026, 8, 30, 0, 0, 0, 0, DateTimeKind.Utc),
                             HabitId = 3
                         },
                         new
                         {
                             Id = 17,
                             Completed = true,
-                            Date = new DateTime(2026, 8, 4, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Date = new DateTime(2026, 8, 31, 0, 0, 0, 0, DateTimeKind.Utc),
                             HabitId = 3
                         },
                         new
                         {
                             Id = 18,
                             Completed = false,
-                            Date = new DateTime(2026, 8, 5, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Date = new DateTime(2026, 9, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             HabitId = 3
                         },
                         new
                         {
                             Id = 19,
                             Completed = false,
-                            Date = new DateTime(2026, 8, 6, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Date = new DateTime(2026, 9, 2, 0, 0, 0, 0, DateTimeKind.Utc),
                             HabitId = 3
                         },
                         new
                         {
                             Id = 20,
                             Completed = true,
-                            Date = new DateTime(2026, 8, 7, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Date = new DateTime(2026, 9, 3, 0, 0, 0, 0, DateTimeKind.Utc),
                             HabitId = 3
                         },
                         new
                         {
                             Id = 21,
                             Completed = false,
-                            Date = new DateTime(2026, 8, 8, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Date = new DateTime(2026, 9, 4, 0, 0, 0, 0, DateTimeKind.Utc),
                             HabitId = 3
                         });
                 });
@@ -283,26 +328,28 @@ namespace HabitTracker.Api.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT")
-                        .HasDefaultValueSql("GETUTCDATE()");
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasMaxLength(255)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("character varying(255)");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("character varying(100)");
 
                     b.Property<string>("PasswordHash")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
@@ -321,6 +368,17 @@ namespace HabitTracker.Api.Migrations
                             Name = "Demo User",
                             PasswordHash = "$2a$11$X3Vf8dGfQZqWvBbNnMmLlOoPpQqRrSsTtUuVvWwXxYyZz1234567"
                         });
+                });
+
+            modelBuilder.Entity("HabitTracker.Models.ExternalLogin", b =>
+                {
+                    b.HasOne("HabitTracker.Models.User", "User")
+                        .WithMany("ExternalLogins")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("HabitTracker.Models.Habit", b =>
@@ -352,6 +410,8 @@ namespace HabitTracker.Api.Migrations
 
             modelBuilder.Entity("HabitTracker.Models.User", b =>
                 {
+                    b.Navigation("ExternalLogins");
+
                     b.Navigation("Habits");
                 });
 #pragma warning restore 612, 618
