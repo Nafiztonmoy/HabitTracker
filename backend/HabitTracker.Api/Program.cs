@@ -40,11 +40,24 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
+var allowedOrigins = new List<string>
+{
+    "http://localhost:3000",
+    "https://localhost:3000"
+};
+
+var frontendUrl = builder.Configuration["Frontend:Url"];
+
+if (!string.IsNullOrWhiteSpace(frontendUrl))
+{
+    allowedOrigins.Add(frontendUrl.TrimEnd('/'));
+}
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReactApp", policy =>
     {
-        policy.WithOrigins("http://localhost:3000", "https://localhost:3000")
+        policy.WithOrigins(allowedOrigins.ToArray())
               .AllowAnyHeader()
               .AllowAnyMethod();
     });
@@ -65,4 +78,5 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
 
