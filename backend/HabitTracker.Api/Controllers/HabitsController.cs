@@ -1,4 +1,4 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 using HabitTracker.DTOs;
 using HabitTracker.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -58,6 +58,13 @@ namespace HabitTracker.Controllers
         {
             var progress = await _habitService.GetWeeklyProgressAsync(GetUserId());
             return Ok(progress);
+        }
+
+        [HttpGet("impact-summary")]
+        public async Task<IActionResult> GetImpactSummary()
+        {
+            var summary = await _habitService.GetImpactSummaryAsync(GetUserId());
+            return Ok(summary);
         }
     }
 }

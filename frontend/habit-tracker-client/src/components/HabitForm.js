@@ -16,8 +16,19 @@ const COLORS = [
   ["cyan", "#06b6d4", "Cyan"],
 ];
 
-const emptyHabit = { title: "", description: "", targetType: "Daily", color: "indigo" };
+const emptyHabit = {
+  title: "",
+  description: "",
+  targetType: "Daily",
+  color: "indigo",
+  moneySavedPerCompletion: "",
+  minutesSavedPerCompletion: "",
+  minutesInvestedPerCompletion: "",
+};
+
 const COLOR_ALIASES = { violet: "purple", rose: "pink", emerald: "green", amber: "orange" };
+const asOptionalInput = (value) => Number(value || 0) > 0 ? String(value) : "";
+const asNonNegativeNumber = (value) => value === "" ? 0 : Math.max(0, Number(value) || 0);
 
 const HabitForm = ({ show, onHide, onSubmit, habit }) => {
   const [formData, setFormData] = useState(emptyHabit);
@@ -33,6 +44,9 @@ const HabitForm = ({ show, onHide, onSubmit, habit }) => {
       description: habit.description || "",
       targetType: habit.targetType || "Daily",
       color: COLOR_ALIASES[habit.color] || habit.color || "indigo",
+      moneySavedPerCompletion: asOptionalInput(habit.moneySavedPerCompletion),
+      minutesSavedPerCompletion: asOptionalInput(habit.minutesSavedPerCompletion),
+      minutesInvestedPerCompletion: asOptionalInput(habit.minutesInvestedPerCompletion),
     } : emptyHabit);
 
     setAiGoal("");
@@ -58,12 +72,13 @@ const HabitForm = ({ show, onHide, onSubmit, habit }) => {
 
     try {
       const { data } = await aiAPI.suggestHabit({ goal });
-      setFormData({
+      setFormData((current) => ({
+        ...current,
         title: data.title || "",
         description: data.description || "",
         targetType: data.targetType === "Weekly" ? "Weekly" : "Daily",
         color: COLOR_ALIASES[data.color] || data.color || "indigo",
-      });
+      }));
       setAiReason(data.reason || "");
     } catch (error) {
       setAiError(
@@ -78,8 +93,16 @@ const HabitForm = ({ show, onHide, onSubmit, habit }) => {
   const handleSubmit = async (event) => {
     event.preventDefault();
     if (!formData.title.trim() || submitting) return;
+
     setSubmitting(true);
-    const saved = await onSubmit({ ...formData, title: formData.title.trim(), description: formData.description.trim() });
+    const saved = await onSubmit({
+      ...formData,
+      title: formData.title.trim(),
+      description: formData.description.trim(),
+      moneySavedPerCompletion: asNonNegativeNumber(formData.moneySavedPerCompletion),
+      minutesSavedPerCompletion: Math.round(asNonNegativeNumber(formData.minutesSavedPerCompletion)),
+      minutesInvestedPerCompletion: Math.round(asNonNegativeNumber(formData.minutesInvestedPerCompletion)),
+    });
     setSubmitting(false);
     if (saved) onHide();
   };
@@ -94,7 +117,7 @@ const HabitForm = ({ show, onHide, onSubmit, habit }) => {
             <div className="habit-form-icon">{habit ? <PiPencilSimpleBold /> : <PiSparkleBold />}</div>
             <div>
               <h2>{habit ? "Edit habit" : "New habit"}</h2>
-              <p>{habit ? "Update the routine without losing its history." : "Keep the habit specific and easy to repeat."}</p>
+              <p>{habit ? "Update the routine without losing its history." : "Track the routine, plus any money or time it gives back."}</p>
             </div>
           </div>
           <button type="button" className="habit-form-close" onClick={onHide} disabled={submitting} aria-label="Close form"><PiXBold /></button>
@@ -151,7 +174,7 @@ const HabitForm = ({ show, onHide, onSubmit, habit }) => {
               maxLength={200}
               value={formData.title}
               onChange={(event) => update("title", event.target.value)}
-              placeholder="Read for 20 minutes"
+              placeholder="No food delivery"
               required
             />
           </label>
@@ -166,6 +189,65 @@ const HabitForm = ({ show, onHide, onSubmit, habit }) => {
               placeholder="Add a cue, target, or useful reminder."
             />
           </label>
+
+          <section className="impact-form-section" aria-labelledby="impact-form-title">
+            <div className="impact-form-heading">
+              <div>
+                <strong id="impact-form-title">Life ROI <small>optional</small></strong>
+                <span>Use your own estimates. These values are counted only when this habit is completed.</span>
+              </div>
+            </div>
+
+            <div className="impact-form-grid">
+              <label className="habit-form-field">
+                <span>Money saved each completion</span>
+                <div className="impact-input-wrap">
+                  <b aria-hidden="true">৳</b>
+                  <input
+                    type="number"
+                    min="0"
+                    max="10000000"
+                    step="0.01"
+                    inputMode="decimal"
+                    value={formData.moneySavedPerCompletion}
+                    onChange={(event) => update("moneySavedPerCompletion", event.target.value)}
+                    placeholder="300"
+                  />
+                </div>
+                <small>If skipping delivery usually saves ৳300, enter 300.</small>
+              </label>
+
+              <label className="habit-form-field">
+                <span>Minutes recovered</span>
+                <input
+                  type="number"
+                  min="0"
+                  max="10080"
+                  step="1"
+                  inputMode="numeric"
+                  value={formData.minutesSavedPerCompletion}
+                  onChange={(event) => update("minutesSavedPerCompletion", event.target.value)}
+                  placeholder="45"
+                />
+                <small>Time you get back by avoiding an unhelpful behavior.</small>
+              </label>
+
+              <label className="habit-form-field">
+                <span>Minutes intentionally invested</span>
+                <input
+                  type="number"
+                  min="0"
+                  max="10080"
+                  step="1"
+                  inputMode="numeric"
+                  value={formData.minutesInvestedPerCompletion}
+                  onChange={(event) => update("minutesInvestedPerCompletion", event.target.value)}
+                  placeholder="30"
+                />
+                <small>Useful time spent on exercise, reading, cooking, study, or similar habits.</small>
+              </label>
+            </div>
+          </section>
 
           <div className="habit-form-split">
             <fieldset className="habit-form-fieldset">

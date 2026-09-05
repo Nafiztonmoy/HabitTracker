@@ -1,4 +1,4 @@
-﻿using HabitTracker.Models;
+using HabitTracker.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace HabitTracker.Data
@@ -112,6 +112,16 @@ namespace HabitTracker.Data
                 entity.Property(h => h.TargetType)
                     .HasConversion<string>()  // Store enum as string in DB
                     .HasMaxLength(10);
+
+                entity.Property(h => h.MoneySavedPerCompletion)
+                    .HasPrecision(18, 2)
+                    .HasDefaultValue(0m);
+
+                entity.Property(h => h.MinutesSavedPerCompletion)
+                    .HasDefaultValue(0);
+
+                entity.Property(h => h.MinutesInvestedPerCompletion)
+                    .HasDefaultValue(0);
 
                 // Index for faster user-specific queries
                 entity.HasIndex(h => h.UserId)

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   PiCalendarCheckBold,
   PiCheckBold,
@@ -8,6 +8,7 @@ import {
   PiTrashBold,
   PiTrophyBold,
 } from "react-icons/pi";
+import { formatCurrency, formatMinutes } from "../utils/formatters";
 
 const COLOR_MAP = {
   blue: ["#3b82f6", "rgba(59,130,246,0.13)"],
@@ -37,6 +38,25 @@ const HabitCard = ({ habit, onToggle, onToggleDate, onEdit, onDelete, busy = fal
     const timer = setTimeout(() => setMounted(true), index * 45);
     return () => clearTimeout(timer);
   }, [index]);
+
+  const impactMetrics = useMemo(() => {
+    const values = [];
+    if (Number(habit.totalMoneySaved || 0) > 0) {
+      values.push({ label: `${formatCurrency(habit.totalMoneySaved)} saved`, kind: "money" });
+    }
+    if (Number(habit.totalMinutesSaved || 0) > 0) {
+      values.push({ label: `${formatMinutes(habit.totalMinutesSaved)} recovered`, kind: "time" });
+    }
+    if (Number(habit.totalMinutesInvested || 0) > 0) {
+      values.push({ label: `${formatMinutes(habit.totalMinutesInvested)} invested`, kind: "invested" });
+    }
+    return values.slice(0, 2);
+  }, [habit.totalMoneySaved, habit.totalMinutesSaved, habit.totalMinutesInvested]);
+
+  const tracksImpact =
+    Number(habit.moneySavedPerCompletion || 0) > 0 ||
+    Number(habit.minutesSavedPerCompletion || 0) > 0 ||
+    Number(habit.minutesInvestedPerCompletion || 0) > 0;
 
   const today = new Date();
   const last7Days = Array.from({ length: 7 }, (_, indexFromStart) => {
@@ -81,6 +101,16 @@ const HabitCard = ({ habit, onToggle, onToggleDate, onEdit, onDelete, busy = fal
             <PiCheckBold />
           </button>
         </div>
+
+        {(impactMetrics.length > 0 || (tracksImpact && !habit.totalCompletions)) && (
+          <div className="habit-impact-row" aria-label="Life ROI impact">
+            {impactMetrics.length > 0 ? impactMetrics.map((metric) => (
+              <span key={metric.kind} className={`habit-impact-chip ${metric.kind}`}>{metric.label}</span>
+            )) : (
+              <span className="habit-impact-chip pending">Life ROI starts with your first completion</span>
+            )}
+          </div>
+        )}
 
         <div className="habit-progress-row">
           <div>

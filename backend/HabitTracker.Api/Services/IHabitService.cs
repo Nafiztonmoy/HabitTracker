@@ -1,4 +1,4 @@
-﻿using HabitTracker.DTOs;
+using HabitTracker.DTOs;
 
 namespace HabitTracker.Services
 {
@@ -12,5 +12,6 @@ namespace HabitTracker.Services
         Task<bool> ToggleHabitLogAsync(int habitId, int userId, DateTime? date);
         Task<IEnumerable<HabitLogResponse>> GetHabitLogsAsync(int habitId, int userId);
         Task<IEnumerable<WeeklyProgressResponse>> GetWeeklyProgressAsync(int userId);
+        Task<ImpactSummaryResponse> GetImpactSummaryAsync(int userId);
     }
 }

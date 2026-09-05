@@ -21,7 +21,7 @@ namespace HabitTracker.Services
                 .Include(h => h.HabitLogs)
                 .ToListAsync();
 
-            return habits.Select(h => MapToResponse(h));
+            return habits.Select(MapToResponse);
         }
 
         public async Task<HabitResponse?> GetHabitByIdAsync(int id, int userId)
@@ -41,11 +41,14 @@ namespace HabitTracker.Services
             var habit = new Habit
             {
                 UserId = userId,
-                Title = request.Title,
-                Description = request.Description,
+                Title = request.Title.Trim(),
+                Description = request.Description?.Trim(),
                 TargetType = request.TargetType,
                 Icon = icon,
-                Color = color
+                Color = color,
+                MoneySavedPerCompletion = request.MoneySavedPerCompletion ?? 0m,
+                MinutesSavedPerCompletion = request.MinutesSavedPerCompletion ?? 0,
+                MinutesInvestedPerCompletion = request.MinutesInvestedPerCompletion ?? 0
             };
 
             _context.Habits.Add(habit);
@@ -57,6 +60,7 @@ namespace HabitTracker.Services
         public async Task<HabitResponse?> UpdateHabitAsync(int id, UpdateHabitRequest request, int userId)
         {
             var habit = await _context.Habits
+                .Include(h => h.HabitLogs)
                 .FirstOrDefaultAsync(h => h.Id == id && h.UserId == userId);
 
             if (habit == null) return null;
@@ -64,11 +68,20 @@ namespace HabitTracker.Services
             var (icon, generatedColor) = GetIconAndColor(request.Title);
             var color = NormalizeColor(request.Color) ?? generatedColor;
 
-            habit.Title = request.Title;
-            habit.Description = request.Description;
+            habit.Title = request.Title.Trim();
+            habit.Description = request.Description?.Trim();
             habit.TargetType = request.TargetType;
             habit.Icon = icon;
             habit.Color = color;
+
+            // Nullable request properties let older clients update a habit without
+            // unintentionally clearing LIFE ROI values they do not know about.
+            if (request.MoneySavedPerCompletion.HasValue)
+                habit.MoneySavedPerCompletion = request.MoneySavedPerCompletion.Value;
+            if (request.MinutesSavedPerCompletion.HasValue)
+                habit.MinutesSavedPerCompletion = request.MinutesSavedPerCompletion.Value;
+            if (request.MinutesInvestedPerCompletion.HasValue)
+                habit.MinutesInvestedPerCompletion = request.MinutesInvestedPerCompletion.Value;
 
             await _context.SaveChangesAsync();
             return MapToResponse(habit);
@@ -145,14 +158,14 @@ namespace HabitTracker.Services
 
             var result = new List<WeeklyProgressResponse>();
 
-            for (int i = 0; i < 7; i++)
+            for (var i = 0; i < 7; i++)
             {
                 var day = startOfWeek.AddDays(i);
                 var dayName = day.ToString("ddd");
 
-                var completed = habits.Count(h => 
+                var completed = habits.Count(h =>
                     h.HabitLogs.Any(l => l.Date.Date == day.Date && l.Completed));
-                
+
                 result.Add(new WeeklyProgressResponse
                 {
                     Day = dayName,
@@ -164,6 +177,42 @@ namespace HabitTracker.Services
             return result;
         }
 
+        public async Task<ImpactSummaryResponse> GetImpactSummaryAsync(int userId)
+        {
+            var habits = await _context.Habits
+                .Where(h => h.UserId == userId &&
+                    (h.MoneySavedPerCompletion > 0 ||
+                     h.MinutesSavedPerCompletion > 0 ||
+                     h.MinutesInvestedPerCompletion > 0))
+                .Include(h => h.HabitLogs.Where(l => l.Completed))
+                .ToListAsync();
+
+            var thirtyDaysAgo = DateTime.UtcNow.Date.AddDays(-29);
+            var response = new ImpactSummaryResponse
+            {
+                ImpactHabitCount = habits.Count
+            };
+
+            foreach (var habit in habits)
+            {
+                var completedLogs = habit.HabitLogs.Where(l => l.Completed).ToList();
+                var completedLast30 = completedLogs.Count(l => l.Date.Date >= thirtyDaysAgo);
+                var totalCompletions = completedLogs.Count;
+
+                response.TotalSuccessfulCompletions += totalCompletions;
+                response.TotalMoneySaved += totalCompletions * habit.MoneySavedPerCompletion;
+                response.TotalMinutesSaved += totalCompletions * habit.MinutesSavedPerCompletion;
+                response.TotalMinutesInvested += totalCompletions * habit.MinutesInvestedPerCompletion;
+
+                response.MoneySavedLast30Days += completedLast30 * habit.MoneySavedPerCompletion;
+                response.MinutesSavedLast30Days += completedLast30 * habit.MinutesSavedPerCompletion;
+                response.MinutesInvestedLast30Days += completedLast30 * habit.MinutesInvestedPerCompletion;
+            }
+
+            response.TotalMoneySaved = decimal.Round(response.TotalMoneySaved, 2);
+            response.MoneySavedLast30Days = decimal.Round(response.MoneySavedLast30Days, 2);
+            return response;
+        }
 
         private static string? NormalizeColor(string? color)
         {
@@ -181,7 +230,7 @@ namespace HabitTracker.Services
 
         private static (string icon, string color) GetIconAndColor(string title)
         {
-            var t = title.ToLower();
+            var t = title.ToLowerInvariant();
 
             if (t.Contains("water") || t.Contains("drink") || t.Contains("hydrat"))
                 return ("💧", "blue");
@@ -202,45 +251,46 @@ namespace HabitTracker.Services
             if (t.Contains("write") || t.Contains("journal"))
                 return ("✍️", "pink");
             if (t.Contains("music") || t.Contains("guitar") || t.Contains("piano"))
-                return ("🎵", "violet");
+                return ("🎵", "purple");
             if (t.Contains("draw") || t.Contains("paint") || t.Contains("art"))
-                return ("🎨", "rose");
+                return ("🎨", "pink");
             if (t.Contains("clean") || t.Contains("organize"))
-                return ("🧹", "emerald");
+                return ("🧹", "green");
             if (t.Contains("money") || t.Contains("save") || t.Contains("budget"))
                 return ("💰", "yellow");
-            if (t.Contains("sleep") || t.Contains("wake"))
-                return ("⏰", "amber");
+            if (t.Contains("wake"))
+                return ("⏰", "orange");
 
             return ("🎯", "purple");
         }
 
-        private HabitResponse MapToResponse(Habit habit)
+        private static HabitResponse MapToResponse(Habit habit)
         {
             var logs = habit.HabitLogs.OrderByDescending(l => l.Date).ToList();
             var today = DateTime.UtcNow.Date;
 
-            int currentStreak = 0;
+            var currentStreak = 0;
             var checkDate = today;
 
             if (!logs.Any(l => l.Date.Date == today && l.Completed))
                 checkDate = today.AddDays(-1);
 
-            while (true)
+            while (logs.Any(l => l.Date.Date == checkDate && l.Completed))
             {
-                if (logs.Any(l => l.Date.Date == checkDate && l.Completed))
-                {
-                    currentStreak++;
-                    checkDate = checkDate.AddDays(-1);
-                }
-                else break;
+                currentStreak++;
+                checkDate = checkDate.AddDays(-1);
             }
 
-            int bestStreak = 0;
-            int tempStreak = 0;
-            var allDates = logs.Where(l => l.Completed).Select(l => l.Date.Date).Distinct().OrderBy(d => d).ToList();
+            var bestStreak = 0;
+            var tempStreak = 0;
+            var allDates = logs
+                .Where(l => l.Completed)
+                .Select(l => l.Date.Date)
+                .Distinct()
+                .OrderBy(d => d)
+                .ToList();
 
-            for (int i = 0; i < allDates.Count; i++)
+            for (var i = 0; i < allDates.Count; i++)
             {
                 if (i == 0 || (allDates[i] - allDates[i - 1]).Days == 1)
                     tempStreak++;
@@ -251,13 +301,12 @@ namespace HabitTracker.Services
             }
 
             var thirtyDaysAgo = today.AddDays(-29);
-            var totalDays = 30;
+            const int totalDays = 30;
             var completedDays = logs.Count(l => l.Date >= thirtyDaysAgo && l.Completed);
-            var completionPercentage = totalDays > 0 ? (double)completedDays / totalDays * 100 : 0;
+            var completionPercentage = (double)completedDays / totalDays * 100;
 
-            // Build calendar for last 30 days
             var calendarDays = new List<CalendarDay>();
-            for (int i = 29; i >= 0; i--)
+            for (var i = 29; i >= 0; i--)
             {
                 var d = today.AddDays(-i);
                 calendarDays.Add(new CalendarDay
@@ -266,6 +315,8 @@ namespace HabitTracker.Services
                     Completed = logs.Any(l => l.Date.Date == d && l.Completed)
                 });
             }
+
+            var totalCompletions = logs.Count(l => l.Completed);
 
             return new HabitResponse
             {
@@ -280,7 +331,14 @@ namespace HabitTracker.Services
                 BestStreak = bestStreak,
                 CompletionPercentage = Math.Round(completionPercentage, 1),
                 IsCompletedToday = logs.Any(l => l.Date.Date == today && l.Completed),
-                CalendarDays = calendarDays
+                CalendarDays = calendarDays,
+                MoneySavedPerCompletion = habit.MoneySavedPerCompletion,
+                MinutesSavedPerCompletion = habit.MinutesSavedPerCompletion,
+                MinutesInvestedPerCompletion = habit.MinutesInvestedPerCompletion,
+                TotalCompletions = totalCompletions,
+                TotalMoneySaved = decimal.Round(totalCompletions * habit.MoneySavedPerCompletion, 2),
+                TotalMinutesSaved = totalCompletions * habit.MinutesSavedPerCompletion,
+                TotalMinutesInvested = totalCompletions * habit.MinutesInvestedPerCompletion
             };
         }
     }

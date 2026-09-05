@@ -2684,3 +2684,343 @@ nav.glass-navbar {
     transition: none !important;
   }
 }
+
+/* ==================================================
+   LIFE ROI - Phase 1 impact tracking
+   ================================================== */
+.life-impact-panel {
+  margin: 1rem 0 1.25rem;
+  padding: 1.3rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: 18px;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--accent-primary) 8%, transparent), transparent 42%),
+    var(--bg-surface);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  box-shadow: var(--card-shadow);
+}
+
+.life-impact-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.life-impact-kicker {
+  display: block;
+  margin-bottom: 0.3rem;
+  color: var(--accent-primary);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.life-impact-heading h2 {
+  margin: 0;
+  color: var(--text-main);
+  font-size: clamp(1.15rem, 2.2vw, 1.55rem);
+  font-weight: 800;
+  letter-spacing: -0.025em;
+}
+
+.life-impact-heading p {
+  max-width: 62ch;
+  margin: 0.35rem 0 0;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.life-impact-count {
+  flex: 0 0 auto;
+  padding: 0.35rem 0.65rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: 999px;
+  background: var(--bg-surface-hover);
+  color: var(--text-muted);
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.life-impact-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr) minmax(150px, 0.58fr);
+  min-height: 155px;
+}
+
+.life-impact-money,
+.life-impact-completions,
+.life-impact-time > div {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.life-impact-money {
+  padding: 1.15rem 1.2rem 0.95rem 0;
+  border-right: 1px solid var(--border-subtle);
+}
+
+.life-impact-money > span,
+.life-impact-completions > span,
+.life-impact-time span {
+  color: var(--text-dim);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.035em;
+  text-transform: uppercase;
+}
+
+.life-impact-money strong {
+  margin-top: 0.25rem;
+  color: var(--text-main);
+  font-size: clamp(2rem, 5vw, 3.35rem);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.055em;
+  font-variant-numeric: tabular-nums;
+}
+
+.life-impact-money small,
+.life-impact-time small,
+.life-impact-completions small {
+  margin-top: 0.45rem;
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  line-height: 1.4;
+}
+
+.life-impact-time {
+  display: grid;
+  grid-template-rows: 1fr 1fr;
+  border-right: 1px solid var(--border-subtle);
+}
+
+.life-impact-time > div {
+  padding: 0.8rem 1rem;
+}
+
+.life-impact-time > div + div {
+  border-top: 1px solid var(--border-subtle);
+}
+
+.life-impact-time strong,
+.life-impact-completions strong {
+  margin-top: 0.15rem;
+  color: var(--text-main);
+  font-size: 1.45rem;
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  font-variant-numeric: tabular-nums;
+}
+
+.life-impact-completions {
+  padding: 1rem 0 1rem 1rem;
+}
+
+.life-impact-completions strong {
+  font-size: 2rem;
+}
+
+.life-impact-empty {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.05rem 0 0;
+}
+
+.life-impact-empty > div,
+.life-impact-empty.compact {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.life-impact-empty strong {
+  color: var(--text-main);
+  font-size: 0.82rem;
+}
+
+.life-impact-empty span {
+  color: var(--text-muted);
+  font-size: 0.74rem;
+  line-height: 1.45;
+}
+
+.life-impact-empty.compact {
+  justify-content: start;
+}
+
+.habit-impact-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.42rem;
+}
+
+.habit-impact-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 27px;
+  padding: 0.25rem 0.55rem;
+  border: 1px solid color-mix(in srgb, var(--habit-accent) 22%, var(--border-subtle));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--habit-accent) 8%, transparent);
+  color: var(--text-main);
+  font-size: 0.67rem;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+}
+
+.habit-impact-chip.pending {
+  border-color: var(--border-subtle);
+  background: var(--bg-surface-hover);
+  color: var(--text-muted);
+  font-weight: 650;
+}
+
+.habit-modal-v2 .modal-dialog {
+  width: min(640px, calc(100% - 1rem));
+  max-width: 640px;
+}
+
+.habit-form-v2 {
+  max-height: calc(100dvh - 2rem);
+  display: flex;
+  flex-direction: column;
+}
+
+.habit-form-body {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.impact-form-section {
+  padding: 0.9rem;
+  border: 1px solid color-mix(in srgb, var(--selected-color) 18%, var(--border-subtle));
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--selected-color) 4%, var(--bg-surface-hover));
+}
+
+.impact-form-heading {
+  margin-bottom: 0.85rem;
+}
+
+.impact-form-heading > div {
+  display: grid;
+  gap: 0.22rem;
+}
+
+.impact-form-heading strong {
+  color: var(--text-main);
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.impact-form-heading strong small {
+  color: var(--text-dim);
+  font-size: 0.68rem;
+  font-weight: 600;
+}
+
+.impact-form-heading span,
+.impact-form-grid .habit-form-field > small {
+  color: var(--text-muted);
+  font-size: 0.68rem;
+  line-height: 1.45;
+}
+
+.impact-form-grid {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr 1fr;
+  gap: 0.75rem;
+  align-items: start;
+}
+
+.impact-input-wrap {
+  position: relative;
+}
+
+.impact-input-wrap b {
+  position: absolute;
+  z-index: 1;
+  left: 0.8rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  font-size: 0.82rem;
+}
+
+.impact-input-wrap input {
+  padding-left: 1.65rem !important;
+}
+
+@media (max-width: 900px) {
+  .life-impact-layout {
+    grid-template-columns: 1.2fr 1fr;
+  }
+
+  .life-impact-time {
+    border-right: 0;
+  }
+
+  .life-impact-completions {
+    grid-column: 1 / -1;
+    padding: 0.8rem 0 0;
+    border-top: 1px solid var(--border-subtle);
+  }
+
+  .impact-form-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .impact-form-grid .habit-form-field:first-child {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 680px) {
+  .life-impact-heading,
+  .life-impact-empty {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .life-impact-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .life-impact-money {
+    padding-right: 0;
+    border-right: 0;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  .life-impact-time {
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  .life-impact-completions {
+    grid-column: auto;
+    border-top: 0;
+  }
+
+  .impact-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .impact-form-grid .habit-form-field:first-child {
+    grid-column: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .life-impact-panel,
+  .habit-impact-chip {
+    transition: none !important;
+  }
+}

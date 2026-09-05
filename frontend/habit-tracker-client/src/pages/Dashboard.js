@@ -19,6 +19,7 @@ import HabitForm from "../components/HabitForm";
 import ProgressChart from "../components/ProgressChart";
 import { habitsAPI, logsAPI } from "../services/api";
 import { useAuth } from "../context/AuthContext";
+import { formatCurrency, formatMinutes } from "../utils/formatters";
 
 const csvCell = (value) => `"${String(value ?? "").replaceAll('"', '""')}"`;
 
@@ -26,6 +27,9 @@ const Dashboard = () => {
   const { user } = useAuth();
   const [habits, setHabits] = useState([]);
   const [weeklyProgress, setWeeklyProgress] = useState([]);
+  const [impactSummary, setImpactSummary] = useState(null);
+  const [impactUnavailable, setImpactUnavailable] = useState(false);
+  const [impactLoading, setImpactLoading] = useState(true);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
@@ -49,6 +53,21 @@ const Dashboard = () => {
       ]);
       setHabits(habitsRes.data);
       setWeeklyProgress(progressRes.data);
+
+      // LIFE ROI is an enhancement. Load it independently so a slow or failed
+      // impact endpoint never blocks the core habit dashboard.
+      if (!silent) setImpactLoading(true);
+      habitsAPI.getImpactSummary()
+        .then((impactRes) => {
+          setImpactSummary(impactRes.data);
+          setImpactUnavailable(false);
+        })
+        .catch(() => {
+          setImpactUnavailable(true);
+        })
+        .finally(() => {
+          setImpactLoading(false);
+        });
     } catch {
       setError("Could not load your habits. Check that the API is running and try again.");
     } finally {
@@ -190,7 +209,7 @@ const Dashboard = () => {
 
   const exportCsv = () => {
     const rows = [
-      ["Habit", "Description", "Frequency", "Current streak", "Best streak", "30-day completion", "Done today"],
+      ["Habit", "Description", "Frequency", "Current streak", "Best streak", "30-day completion", "Done today", "Estimated money saved", "Minutes recovered", "Minutes invested"],
       ...habits.map((habit) => [
         habit.title,
         habit.description || "",
@@ -199,6 +218,9 @@ const Dashboard = () => {
         habit.bestStreak || 0,
         `${habit.completionPercentage || 0}%`,
         habit.isCompletedToday ? "Yes" : "No",
+        habit.totalMoneySaved || 0,
+        habit.totalMinutesSaved || 0,
+        habit.totalMinutesInvested || 0,
       ]),
     ];
     const csv = rows.map((row) => row.map(csvCell).join(",")).join("\n");
@@ -280,6 +302,68 @@ const Dashboard = () => {
             <button className="focus-complete-button" onClick={() => setShowForm(true)}><PiPlusBold /> Add first habit</button>
           )}
         </div>
+      </section>
+
+      <section className="life-impact-panel" aria-labelledby="life-impact-title">
+        <div className="life-impact-heading">
+          <div>
+            <span className="life-impact-kicker">Life ROI</span>
+            <h2 id="life-impact-title">What your better habits give back</h2>
+            <p>Estimated from the values you entered and your completed habit history.</p>
+          </div>
+          {impactSummary?.impactHabitCount > 0 && (
+            <span className="life-impact-count">{impactSummary.impactHabitCount} impact {impactSummary.impactHabitCount === 1 ? "habit" : "habits"}</span>
+          )}
+        </div>
+
+        {impactLoading && !impactSummary ? (
+          <div className="life-impact-empty compact">
+            <strong>Calculating Life ROI...</strong>
+            <span>Your habits are already available while this summary loads.</span>
+          </div>
+        ) : impactUnavailable ? (
+          <div className="life-impact-empty compact">
+            <strong>Life ROI is temporarily unavailable.</strong>
+            <span>Your habit tracking is still up to date.</span>
+          </div>
+        ) : !impactSummary || impactSummary.impactHabitCount === 0 ? (
+          <div className="life-impact-empty">
+            <div>
+              <strong>Add money or time impact to a habit to see your Life ROI.</strong>
+              <span>Impact fields are optional, so normal habits continue to work exactly as before.</span>
+            </div>
+            <button className="dash-secondary-button" onClick={() => { setEditingHabit(null); setShowForm(true); }}>
+              <PiPlusBold /> Add impact habit
+            </button>
+          </div>
+        ) : (
+          <div className="life-impact-layout">
+            <div className="life-impact-money">
+              <span>Estimated savings</span>
+              <strong>{formatCurrency(impactSummary.totalMoneySaved)}</strong>
+              <small>{formatCurrency(impactSummary.moneySavedLast30Days)} from completions in the last 30 days</small>
+            </div>
+
+            <div className="life-impact-time">
+              <div>
+                <span>Time recovered</span>
+                <strong>{formatMinutes(impactSummary.totalMinutesSaved)}</strong>
+                <small>{formatMinutes(impactSummary.minutesSavedLast30Days)} in the last 30 days</small>
+              </div>
+              <div>
+                <span>Time invested</span>
+                <strong>{formatMinutes(impactSummary.totalMinutesInvested)}</strong>
+                <small>{formatMinutes(impactSummary.minutesInvestedLast30Days)} in useful activities recently</small>
+              </div>
+            </div>
+
+            <div className="life-impact-completions">
+              <span>Successful changes</span>
+              <strong>{impactSummary.totalSuccessfulCompletions}</strong>
+              <small>Completed logs across impact-enabled habits</small>
+            </div>
+          </div>
+        )}
       </section>
 
       <section className="metric-strip" aria-label="Habit metrics">

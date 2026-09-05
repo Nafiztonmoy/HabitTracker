@@ -15,6 +15,15 @@ namespace HabitTracker.DTOs
 
         [MaxLength(50)]
         public string? Color { get; set; }
+
+        [Range(typeof(decimal), "0", "10000000")]
+        public decimal? MoneySavedPerCompletion { get; set; }
+
+        [Range(0, 10080)]
+        public int? MinutesSavedPerCompletion { get; set; }
+
+        [Range(0, 10080)]
+        public int? MinutesInvestedPerCompletion { get; set; }
     }
 
     public class UpdateHabitRequest
@@ -29,6 +38,15 @@ namespace HabitTracker.DTOs
 
         [MaxLength(50)]
         public string? Color { get; set; }
+
+        [Range(typeof(decimal), "0", "10000000")]
+        public decimal? MoneySavedPerCompletion { get; set; }
+
+        [Range(0, 10080)]
+        public int? MinutesSavedPerCompletion { get; set; }
+
+        [Range(0, 10080)]
+        public int? MinutesInvestedPerCompletion { get; set; }
     }
 
     public class HabitResponse
@@ -45,6 +63,26 @@ namespace HabitTracker.DTOs
         public double CompletionPercentage { get; set; }
         public bool IsCompletedToday { get; set; }
         public List<CalendarDay> CalendarDays { get; set; } = new();
+
+        public decimal MoneySavedPerCompletion { get; set; }
+        public int MinutesSavedPerCompletion { get; set; }
+        public int MinutesInvestedPerCompletion { get; set; }
+        public int TotalCompletions { get; set; }
+        public decimal TotalMoneySaved { get; set; }
+        public int TotalMinutesSaved { get; set; }
+        public int TotalMinutesInvested { get; set; }
+    }
+
+    public class ImpactSummaryResponse
+    {
+        public decimal TotalMoneySaved { get; set; }
+        public int TotalMinutesSaved { get; set; }
+        public int TotalMinutesInvested { get; set; }
+        public int TotalSuccessfulCompletions { get; set; }
+        public decimal MoneySavedLast30Days { get; set; }
+        public int MinutesSavedLast30Days { get; set; }
+        public int MinutesInvestedLast30Days { get; set; }
+        public int ImpactHabitCount { get; set; }
     }
 
     public class CalendarDay

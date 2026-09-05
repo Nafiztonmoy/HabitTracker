@@ -52,7 +52,8 @@ export const habitsAPI = {
   create: (data) => api.post('/habits', data),
   update: (id, data) => api.put(`/habits/${id}`, data),
   delete: (id) => api.delete(`/habits/${id}`),
-  getWeeklyProgress: () => api.get('/habits/weekly-progress')
+  getWeeklyProgress: () => api.get('/habits/weekly-progress'),
+  getImpactSummary: () => api.get('/habits/impact-summary')
 };
 
 export const logsAPI = {

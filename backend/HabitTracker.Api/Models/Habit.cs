@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace HabitTracker.Models
 {
@@ -30,6 +30,12 @@ namespace HabitTracker.Models
 
         [MaxLength(50)]
         public string Color { get; set; } = "purple";
+
+        // LIFE ROI values are user estimates applied once per completed HabitLog.
+        // Zero keeps existing habits fully backward-compatible.
+        public decimal MoneySavedPerCompletion { get; set; }
+        public int MinutesSavedPerCompletion { get; set; }
+        public int MinutesInvestedPerCompletion { get; set; }
 
         public User User { get; set; } = null!;
         public ICollection<HabitLog> HabitLogs { get; set; } = new List<HabitLog>();
