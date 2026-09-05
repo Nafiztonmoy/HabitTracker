@@ -1,22 +1,23 @@
 import React, { useEffect, useState } from "react";
 import { Container } from "react-bootstrap";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
 import {
   PiChartLineUpBold,
-  PiClockBold,
   PiCheckSquareBold,
+  PiClockBold,
   PiFlameBold,
   PiHouseBold,
+  PiListBold,
+  PiMoonBold,
   PiPiggyBankBold,
-  PiTargetBold,
   PiSignOutBold,
   PiSunBold,
-  PiMoonBold,
+  PiTargetBold,
   PiUserBold,
-  PiListBold,
   PiXBold,
 } from "react-icons/pi";
+
+import { useAuth } from "../context/AuthContext";
 
 const navItems = [
   { to: "/dashboard", label: "Overview", icon: PiHouseBold },
@@ -29,16 +30,15 @@ const navItems = [
 
 const AppNavbar = () => {
   const { user, logout, isAuthenticated } = useAuth();
-  const navigate = useNavigate();
   const location = useLocation();
+  const navigate = useNavigate();
 
-  const isAuthRoute = ["/login", "/register"].includes(location.pathname);
-
+  const [menuOpen, setMenuOpen] = useState(false);
   const [theme, setTheme] = useState(
     () => localStorage.getItem("habit_theme") || "light"
   );
 
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const isAuthPage = ["/login", "/register"].includes(location.pathname);
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
@@ -46,143 +46,139 @@ const AppNavbar = () => {
   }, [theme]);
 
   useEffect(() => {
-    setMobileOpen(false);
+    setMenuOpen(false);
   }, [location.pathname]);
 
   const toggleTheme = () => {
-    setTheme((current) =>
-      current === "light" ? "dark" : "light"
-    );
+    setTheme((current) => (current === "dark" ? "light" : "dark"));
   };
 
   const handleLogout = () => {
+    setMenuOpen(false);
     logout();
-    setMobileOpen(false);
     navigate("/login");
   };
 
-  const isDark = theme === "dark";
-
   return (
-    <nav
-      className={`glass-navbar app-product-nav ${
-        isAuthRoute ? "glass-navbar--auth" : ""
-      }`}
-    >
-      <Container className="product-nav-container">
-        <div className="navbar-flex-row product-navbar-row">
-          <Link to="/dashboard" className="navbar-brand-glass">
-            <div className="brand-logo-gradient">
+    <nav className={`cadence-nav ${isAuthPage ? "cadence-nav-auth" : ""}`}>
+      <Container className="cadence-nav-container">
+        <div className="cadence-nav-row">
+          <Link
+            to="/dashboard"
+            className="cadence-nav-brand"
+            onClick={() => setMenuOpen(false)}
+          >
+            <span className="cadence-nav-logo" aria-hidden="true">
               <PiFlameBold />
-            </div>
-
-            <span className="brand-name">Cadence</span>
+            </span>
+            <span className="cadence-nav-name">Cadence</span>
           </Link>
 
-          {isAuthenticated && !isAuthRoute && (
-            <div
-              className={`product-nav-links ${
-                mobileOpen ? "is-open" : ""
-              }`}
-              aria-label="Main navigation"
-            >
+          {isAuthenticated && !isAuthPage ? (
+            <div className="cadence-nav-desktop" aria-label="Main navigation">
               {navItems.map(({ to, label, icon: Icon }) => (
                 <Link
                   key={to}
                   to={to}
-                  className={`product-nav-link ${
+                  className={`cadence-nav-link ${
                     location.pathname === to ? "active" : ""
                   }`}
                 >
-                  <Icon />
+                  <Icon aria-hidden="true" />
                   <span>{label}</span>
                 </Link>
               ))}
             </div>
+          ) : (
+            <div />
           )}
 
-          <div className="navbar-right-controls product-nav-controls">
+          <div className="cadence-nav-actions">
             <button
               type="button"
+              className="cadence-nav-icon-button"
               onClick={toggleTheme}
-              className="btn-theme-glass"
-              title={`Switch to ${
-                isDark ? "light" : "dark"
-              } mode`}
               aria-label="Toggle light and dark mode"
+              title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
             >
-              {isDark ? (
-                <PiSunBold className="icon-sun" />
-              ) : (
-                <PiMoonBold className="icon-moon" />
-              )}
+              {theme === "dark" ? <PiSunBold /> : <PiMoonBold />}
             </button>
 
             {isAuthenticated ? (
               <>
-                <div className="user-glass-pill product-user-pill">
-                  <div className="user-avatar-gradient">
+                <div className="cadence-nav-user">
+                  <span className="cadence-nav-avatar" aria-hidden="true">
                     <PiUserBold />
-                  </div>
-
-                  <span className="user-name-text">
-                    {user?.name ||
-                      user?.email ||
-                      "User"}
+                  </span>
+                  <span className="cadence-nav-user-name">
+                    {user?.name || user?.email || "User"}
                   </span>
                 </div>
 
                 <button
                   type="button"
+                  className="cadence-nav-logout"
                   onClick={handleLogout}
-                  className="btn-logout-glass product-logout-button"
-                  aria-label="Log out"
                 >
-                  <PiSignOutBold />
+                  <PiSignOutBold aria-hidden="true" />
                   <span>Logout</span>
                 </button>
 
-                {!isAuthRoute && (
+                {!isAuthPage && (
                   <button
                     type="button"
-                    className="mobile-nav-toggle"
-                    onClick={() =>
-                      setMobileOpen((current) => !current)
-                    }
-                    aria-label={
-                      mobileOpen
-                        ? "Close navigation"
-                        : "Open navigation"
-                    }
-                    aria-expanded={mobileOpen}
+                    className="cadence-nav-menu-button"
+                    onClick={() => setMenuOpen((current) => !current)}
+                    aria-label={menuOpen ? "Close navigation menu" : "Open navigation menu"}
+                    aria-expanded={menuOpen}
+                    aria-controls="cadence-responsive-menu"
                   >
-                    {mobileOpen ? (
-                      <PiXBold />
-                    ) : (
-                      <PiListBold />
-                    )}
+                    {menuOpen ? <PiXBold /> : <PiListBold />}
                   </button>
                 )}
               </>
-            ) : !isAuthRoute ? (
+            ) : !isAuthPage ? (
               <>
-                <Link
-                  to="/login"
-                  className="nav-link-glass"
-                >
+                <Link to="/login" className="nav-link-glass">
                   Log in
                 </Link>
-
-                <Link
-                  to="/register"
-                  className="btn-cta-gradient"
-                >
+                <Link to="/register" className="btn-cta-gradient">
                   Get Started
                 </Link>
               </>
             ) : null}
           </div>
         </div>
+
+        {isAuthenticated && !isAuthPage && (
+          <div
+            id="cadence-responsive-menu"
+            className={`cadence-responsive-menu ${menuOpen ? "open" : ""}`}
+          >
+            {navItems.map(({ to, label, icon: Icon }) => (
+              <Link
+                key={to}
+                to={to}
+                onClick={() => setMenuOpen(false)}
+                className={`cadence-responsive-menu-link ${
+                  location.pathname === to ? "active" : ""
+                }`}
+              >
+                <Icon aria-hidden="true" />
+                <span>{label}</span>
+              </Link>
+            ))}
+
+            <button
+              type="button"
+              className="cadence-responsive-menu-logout"
+              onClick={handleLogout}
+            >
+              <PiSignOutBold aria-hidden="true" />
+              <span>Logout</span>
+            </button>
+          </div>
+        )}
       </Container>
     </nav>
   );
