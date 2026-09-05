@@ -5462,4 +5462,964 @@ nav.glass-navbar {
   .overview-goal-progress span {
     transition: none !important;
   }
+/* ==========================================================
+   CADENCE MOBILE RESPONSIVE PATCH
+   Paste this at the VERY END of App.css
+   ========================================================== */
+
+.mobile-nav-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 auto;
+  border: 1px solid var(--product-border);
+  border-radius: 11px;
+  background: var(--product-surface-strong);
+  color: var(--text-main);
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition:
+    transform 0.18s ease,
+    background 0.18s ease,
+    border-color 0.18s ease;
+}
+
+.mobile-nav-toggle:hover {
+  border-color: var(--border-glow);
+  background: var(--product-soft);
+}
+
+.mobile-nav-toggle:active {
+  transform: scale(0.94);
+}
+
+.mobile-nav-toggle:focus-visible {
+  outline: 3px solid rgba(99, 102, 241, 0.28);
+  outline-offset: 2px;
+}
+
+.progress-chart-shell {
+  position: relative;
+  width: 100%;
+  height: 226px;
+  min-width: 0;
+}
+
+.product-page,
+.product-page *,
+.dashboard-panel,
+.overview-command-card,
+.overview-impact-strip,
+.overview-lower-grid,
+.overview-side-stack,
+.life-roi-hero,
+.goal-time-layout,
+.future-pace-card,
+.future-timeline,
+.reports-grid {
+  min-width: 0;
+}
+
+/* ==========================================================
+   TABLET
+   ========================================================== */
+
+@media (max-width: 900px) {
+  html,
+  body {
+    overflow-x: hidden;
+  }
+
+  .product-nav-container {
+    max-width: 100% !important;
+    padding-left: 14px !important;
+    padding-right: 14px !important;
+  }
+
+  .product-navbar-row {
+    display: grid;
+    grid-template-columns:
+      minmax(0, auto)
+      1fr
+      auto;
+    align-items: center;
+    gap: 0.65rem;
+    min-height: 62px;
+    padding: 0.45rem 0;
+  }
+
+  .navbar-brand-glass {
+    grid-column: 1;
+    min-width: 0;
+  }
+
+  .product-nav-controls {
+    grid-column: 3;
+    justify-self: end;
+    gap: 0.4rem;
+  }
+
+  .mobile-nav-toggle {
+    display: inline-flex;
+  }
+
+  .product-user-pill {
+    display: none;
+  }
+
+  .product-logout-button span {
+    display: none;
+  }
+
+  .product-logout-button {
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    justify-content: center;
+  }
+
+  .product-nav-links {
+    display: none;
+
+    grid-column: 1 / -1;
+    grid-row: 2;
+
+    width: 100%;
+    margin: 0.15rem 0 0;
+    padding: 0.45rem;
+
+    grid-template-columns:
+      repeat(3, minmax(0, 1fr));
+
+    gap: 0.35rem;
+
+    overflow: visible;
+
+    border: 1px solid var(--product-border);
+    border-radius: 16px;
+
+    background: var(--product-surface);
+
+    box-shadow:
+      0 12px 35px
+      rgba(30, 41, 59, 0.08);
+  }
+
+  .product-nav-links.is-open {
+    display: grid;
+    animation:
+      cadenceMobileMenuIn
+      0.28s
+      cubic-bezier(0.16, 1, 0.3, 1)
+      both;
+  }
+
+  .product-nav-link {
+    width: 100%;
+    min-height: 44px;
+
+    justify-content: flex-start;
+
+    padding: 0.65rem 0.7rem;
+
+    border-radius: 11px;
+
+    font-size: 0.78rem;
+  }
+
+  .product-nav-link span {
+    display: inline;
+  }
+
+  .product-nav-link svg {
+    flex: 0 0 auto;
+    font-size: 1.05rem;
+  }
+
+  .product-page {
+    width: calc(100% - 28px);
+    max-width: 100%;
+    padding-top: 1.35rem;
+    padding-bottom: 4rem;
+  }
+
+  .overview-command-card,
+  .overview-impact-strip,
+  .overview-lower-grid,
+  .overview-side-stack,
+  .life-roi-hero,
+  .goal-time-layout,
+  .future-pace-card,
+  .reports-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .overview-side-stack {
+    gap: 1rem;
+  }
+
+  .future-timeline {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .future-card-3 {
+    grid-column: 1 / -1;
+  }
+}
+
+/* ==========================================================
+   MOBILE
+   ========================================================== */
+
+@media (max-width: 720px) {
+  .product-page {
+    width: calc(100% - 20px);
+    padding-top: 1.1rem;
+    padding-bottom: 4rem;
+  }
+
+  .product-page-header {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+    margin-bottom: 1.2rem;
+  }
+
+  .product-page-header > div:first-child {
+    width: 100%;
+  }
+
+  .product-page-header h1 {
+    max-width: 100%;
+    margin-top: 0.15rem;
+
+    font-size:
+      clamp(1.75rem, 8vw, 2.3rem);
+
+    line-height: 1.08;
+    letter-spacing: -0.04em;
+
+    overflow-wrap: break-word;
+  }
+
+  .product-page-header p {
+    max-width: 100%;
+    font-size: 0.85rem;
+    line-height: 1.5;
+  }
+
+  .product-page-actions {
+    display: flex;
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+  }
+
+  .product-page-actions
+  .dash-primary-button,
+  .product-page-actions
+  .dash-secondary-button {
+    flex: 1 1 150px;
+    justify-content: center;
+  }
+
+  .dash-icon-button {
+    flex: 0 0 42px;
+  }
+
+  /* Dashboard */
+
+  .overview-command-card {
+    gap: 1.1rem;
+    padding: 1.1rem;
+
+    border-radius: 20px;
+  }
+
+  .overview-command-main {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .overview-ring {
+    width: 104px;
+    height: 104px;
+    margin: 0 auto;
+  }
+
+  .overview-command-copy {
+    text-align: left;
+  }
+
+  .overview-command-copy h2 {
+    font-size: 1.55rem;
+  }
+
+  .overview-next-action {
+    display: grid;
+    grid-template-columns: 1fr;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  .overview-next-action strong {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .overview-next-action
+  .focus-complete-button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .overview-ledger {
+    display: grid;
+    grid-template-columns: 1fr;
+    padding-left: 0;
+
+    border-top:
+      1px solid
+      var(--product-line);
+
+    border-left: 0;
+  }
+
+  .overview-ledger > div,
+  .overview-ledger > div + div {
+    display: grid;
+
+    grid-template-columns:
+      auto
+      minmax(0, 1fr)
+      auto;
+
+    gap: 0.65rem;
+
+    padding: 0.75rem 0;
+
+    border-left: 0;
+  }
+
+  .overview-ledger > div + div {
+    border-top:
+      1px solid
+      var(--product-line);
+  }
+
+  .overview-ledger strong {
+    grid-column: auto;
+    padding-left: 0;
+  }
+
+  /* Life ROI dashboard */
+
+  .overview-impact-strip {
+    gap: 1rem;
+    padding: 1.05rem;
+    border-radius: 20px;
+  }
+
+  .overview-impact-values {
+    display: grid;
+    grid-template-columns: 1fr;
+
+    padding-top: 1rem;
+
+    border-top:
+      1px solid
+      var(--product-line);
+
+    border-left: 0;
+  }
+
+  .impact-primary-value {
+    padding: 0 0 1rem;
+  }
+
+  .impact-primary-value strong {
+    font-size:
+      clamp(2rem, 13vw, 2.9rem);
+
+    overflow-wrap: anywhere;
+  }
+
+  .impact-secondary-values {
+    display: grid;
+    grid-template-columns: 1fr;
+
+    border-top:
+      1px solid
+      var(--product-line);
+
+    border-left: 0;
+  }
+
+  .impact-secondary-values > div {
+    padding: 0.75rem 0;
+  }
+
+  .impact-secondary-values
+  > div + div {
+    border-top:
+      1px solid
+      var(--product-line);
+
+    border-left: 0;
+  }
+
+  /* Dashboard lower section */
+
+  .overview-lower-grid,
+  .overview-side-stack {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-panel {
+    padding: 1.05rem;
+    border-radius: 20px;
+  }
+
+  .panel-heading {
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .panel-heading h2 {
+    font-size: 1.05rem;
+  }
+
+  .panel-heading p {
+    font-size: 0.78rem;
+  }
+
+  .panel-heading
+  .text-action-link {
+    font-size: 0.76rem;
+  }
+
+  .overview-open-item strong {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  /* Chart */
+
+  .progress-chart-shell {
+    height: 190px;
+    margin-top: 0.35rem;
+  }
+
+  /* Habits */
+
+  .habits-summary-line,
+  .report-summary-line {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+
+  .habits-summary-line > div,
+  .report-summary-line > div {
+    min-width: 0;
+    padding: 0.75rem;
+  }
+
+  .habits-summary-line strong,
+  .report-summary-line strong {
+    font-size: 0.95rem;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .habits-page-commandbar {
+    display: grid;
+    grid-template-columns: 1fr;
+    align-items: stretch;
+    gap: 0.6rem;
+  }
+
+  .habits-page-commandbar
+  .habit-search {
+    width: 100%;
+  }
+
+  .habits-page-commandbar
+  .dashboard-filter-tabs {
+    display: flex;
+    width: 100%;
+
+    overflow-x: auto;
+
+    scrollbar-width: none;
+  }
+
+  .habits-page-commandbar
+  .dashboard-filter-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .habits-page-commandbar
+  .filter-tab {
+    flex: 0 0 auto;
+  }
+
+  .habit-grid,
+  .dashboard-habit-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .glass-habit-card {
+    width: 100%;
+  }
+
+  /* Life ROI */
+
+  .life-roi-hero {
+    grid-template-columns: 1fr;
+    border-radius: 20px;
+  }
+
+  .life-roi-money-block {
+    min-height: auto;
+    padding: 1.2rem;
+  }
+
+  .life-roi-money-block > strong {
+    font-size:
+      clamp(2.5rem, 15vw, 3.8rem);
+
+    overflow-wrap: anywhere;
+  }
+
+  .life-roi-time-blocks {
+    grid-template-columns: 1fr;
+  }
+
+  .impact-breakdown-row {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .impact-breakdown-name {
+    grid-column: auto;
+  }
+
+  .impact-breakdown-name strong,
+  .impact-breakdown-name span {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  /* Goals */
+
+  .goal-time-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .active-goal-card,
+  .time-bank-card {
+    padding: 1.05rem;
+    border-radius: 20px;
+  }
+
+  .active-goal-copy h2 {
+    font-size: 1.35rem;
+    overflow-wrap: anywhere;
+  }
+
+  .active-goal-amounts {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+
+  .active-goal-footer {
+    grid-template-columns: 1fr;
+  }
+
+  .active-goal-footer > div,
+  .active-goal-footer
+  > div + div {
+    padding:
+      0.75rem 0 0;
+
+    border-left: 0;
+  }
+
+  .active-goal-footer
+  > div + div {
+    margin-top: 0.65rem;
+
+    border-top:
+      1px solid
+      var(--product-line);
+  }
+
+  .goal-queue-row {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .goal-queue-main strong,
+  .goal-queue-main span {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .goal-queue-progress {
+    width: 100%;
+  }
+
+  .goal-queue-actions {
+    display: flex;
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+
+  .goal-activate-button {
+    flex: 1;
+  }
+
+  /* Future Me */
+
+  .future-pace-card {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    padding: 1.05rem;
+    border-radius: 20px;
+  }
+
+  .future-pace-metrics {
+    display: grid;
+    grid-template-columns: 1fr;
+
+    padding-top: 0.8rem;
+
+    border-top:
+      1px solid
+      var(--product-line);
+
+    border-left: 0;
+  }
+
+  .future-pace-metrics
+  > div {
+    padding: 0.7rem 0;
+  }
+
+  .future-pace-metrics
+  > div + div {
+    border-top:
+      1px solid
+      var(--product-line);
+
+    border-left: 0;
+  }
+
+  .future-timeline {
+    grid-template-columns: 1fr;
+  }
+
+  .future-card,
+  .future-card-3 {
+    grid-column: auto;
+    min-height: 230px;
+    padding: 1.05rem;
+    border-radius: 20px;
+  }
+
+  .future-card-money {
+    margin-top: 1.55rem;
+
+    font-size:
+      clamp(1.85rem, 12vw, 2.65rem);
+
+    overflow-wrap: anywhere;
+  }
+
+  .future-card-time > div {
+    grid-template-columns:
+      auto
+      minmax(0, 1fr)
+      auto;
+  }
+
+  .future-card-time strong {
+    text-align: right;
+  }
+
+  .future-goal-bridge {
+    grid-template-columns: 1fr;
+    padding: 1.05rem;
+    border-radius: 20px;
+  }
+
+  .future-goal-icon {
+    width: 42px;
+    height: 42px;
+  }
+
+  .future-goal-bridge
+  .dash-secondary-button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .future-ai-panel {
+    padding: 1.05rem;
+    border-radius: 20px;
+  }
+
+  .future-ai-heading {
+    flex-direction: column;
+  }
+
+  .future-ai-title-wrap {
+    width: 100%;
+  }
+
+  .future-ai-button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .future-ai-points {
+    grid-template-columns: 1fr;
+  }
+
+  .future-empty-state {
+    grid-template-columns: 1fr;
+    min-height: auto;
+    padding: 1.2rem;
+  }
+
+  /* Reports */
+
+  .reports-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .report-context-list > div {
+    min-width: 0;
+  }
+
+  .report-context-list strong {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  /* Forms */
+
+  .goal-form-grid,
+  .impact-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .habit-form-field,
+  .habit-form-field input,
+  .habit-form-field select,
+  .habit-form-field textarea {
+    min-width: 0;
+    width: 100%;
+  }
+}
+
+/* ==========================================================
+   SMALL PHONES
+   ========================================================== */
+
+@media (max-width: 480px) {
+  .product-nav-container {
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+  }
+
+  .product-navbar-row {
+    gap: 0.4rem;
+  }
+
+  .brand-logo-gradient {
+    width: 32px;
+    height: 32px;
+    border-radius: 9px;
+  }
+
+  .brand-name {
+    max-width: 92px;
+    font-size: 1rem;
+  }
+
+  .btn-theme-glass,
+  .product-logout-button,
+  .mobile-nav-toggle {
+    width: 36px;
+    height: 36px;
+  }
+
+  .product-nav-links {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+
+  .product-nav-link {
+    min-height: 42px;
+    padding: 0.58rem 0.6rem;
+    font-size: 0.75rem;
+  }
+
+  .product-page {
+    width: calc(100% - 16px);
+    padding-top: 0.9rem;
+  }
+
+  .product-page-header h1 {
+    font-size:
+      clamp(1.65rem, 9vw, 2.05rem);
+  }
+
+  .product-page-header p {
+    font-size: 0.8rem;
+  }
+
+  .overview-command-card,
+  .overview-impact-strip,
+  .dashboard-panel,
+  .active-goal-card,
+  .time-bank-card,
+  .future-pace-card,
+  .future-card,
+  .future-goal-bridge,
+  .future-ai-panel,
+  .future-empty-state {
+    padding: 0.95rem;
+    border-radius: 18px;
+  }
+
+  .overview-ring {
+    width: 94px;
+    height: 94px;
+  }
+
+  .today-ring-inner strong {
+    font-size: 1.25rem;
+  }
+
+  .overview-command-copy h2 {
+    font-size: 1.4rem;
+  }
+
+  .impact-primary-value strong {
+    font-size: 2rem;
+  }
+
+  .progress-chart-shell {
+    height: 170px;
+  }
+
+  .habits-summary-line,
+  .report-summary-line {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .habits-summary-line > div,
+  .report-summary-line > div {
+    padding: 0.65rem;
+  }
+
+  .future-card {
+    min-height: 210px;
+  }
+
+  .future-card-money {
+    font-size: 1.9rem;
+  }
+
+  .future-card-time > div {
+    gap: 0.35rem;
+  }
+}
+
+/* ==========================================================
+   VERY SMALL PHONES
+   ========================================================== */
+
+@media (max-width: 360px) {
+  .brand-name {
+    display: none;
+  }
+
+  .product-nav-links {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .product-page {
+    width: calc(100% - 12px);
+  }
+
+  .product-page-actions
+  .dash-primary-button,
+  .product-page-actions
+  .dash-secondary-button {
+    width: 100%;
+    flex-basis: 100%;
+  }
+
+  .habits-summary-line,
+  .report-summary-line {
+    grid-template-columns: 1fr;
+  }
+
+  .habits-summary-line
+  > div:nth-child(even),
+  .report-summary-line
+  > div:nth-child(even) {
+    border-left: 0;
+  }
+
+  .habits-summary-line
+  > div + div,
+  .report-summary-line
+  > div + div {
+    border-top:
+      1px solid
+      var(--product-line);
+  }
+}
+
+/* ==========================================================
+   MOBILE ANIMATION
+   ========================================================== */
+
+@keyframes cadenceMobileMenuIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px)
+      scale(0.985);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0)
+      scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .product-nav-links.is-open,
+  .mobile-nav-toggle,
+  .product-nav-link {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
 }
