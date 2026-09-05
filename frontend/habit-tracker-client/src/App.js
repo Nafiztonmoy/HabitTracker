@@ -6,6 +6,9 @@ import AppNavbar from "./components/Navbar";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
+import Habits from "./pages/Habits";
+import LifeImpact from "./pages/LifeImpact";
+import Reports from "./pages/Reports";
 import "./App.css";
 
 const ProtectedRoute = ({ children }) => {
@@ -61,6 +64,8 @@ const AuthFrame = ({ mode, children }) => {
   );
 };
 
+const protectedPage = (page) => <ProtectedRoute>{page}</ProtectedRoute>;
+
 function App() {
   return (
     <AuthProvider>
@@ -84,15 +89,12 @@ function App() {
                 </AuthFrame>
               }
             />
-            <Route
-              path="/dashboard"
-              element={
-                <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
-              }
-            />
+            <Route path="/dashboard" element={protectedPage(<Dashboard />)} />
+            <Route path="/habits" element={protectedPage(<Habits />)} />
+            <Route path="/impact" element={protectedPage(<LifeImpact />)} />
+            <Route path="/reports" element={protectedPage(<Reports />)} />
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>
         </div>
       </Router>

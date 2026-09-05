@@ -1,52 +1,41 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Alert } from "react-bootstrap";
+import { Link } from "react-router-dom";
 import confetti from "canvas-confetti";
 import {
   PiArrowClockwiseBold,
+  PiArrowRightBold,
   PiCalendarCheckBold,
   PiCheckBold,
   PiCheckCircleBold,
-  PiDownloadSimpleBold,
+  PiClockBold,
   PiFlameBold,
-  PiMagnifyingGlassBold,
-  PiPlusBold,
+  PiPiggyBankBold,
   PiTargetBold,
-  PiTrophyBold,
+  PiTimerBold,
 } from "react-icons/pi";
-import AIWeeklyReview from "../components/AIWeeklyReview";
-import HabitCard from "../components/HabitCard";
-import HabitForm from "../components/HabitForm";
 import ProgressChart from "../components/ProgressChart";
 import { habitsAPI, logsAPI } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import { formatCurrency, formatMinutes } from "../utils/formatters";
-
-const csvCell = (value) => `"${String(value ?? "").replaceAll('"', '""')}"`;
 
 const Dashboard = () => {
   const { user } = useAuth();
   const [habits, setHabits] = useState([]);
   const [weeklyProgress, setWeeklyProgress] = useState([]);
   const [impactSummary, setImpactSummary] = useState(null);
-  const [impactUnavailable, setImpactUnavailable] = useState(false);
-  const [impactLoading, setImpactLoading] = useState(true);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState("");
-  const [showForm, setShowForm] = useState(false);
-  const [editingHabit, setEditingHabit] = useState(null);
-  const [filter, setFilter] = useState("all");
-  const [query, setQuery] = useState("");
-  const [sortBy, setSortBy] = useState("priority");
-  const [mounted, setMounted] = useState(false);
   const [pendingHabitId, setPendingHabitId] = useState(null);
-  const searchRef = useRef(null);
+  const [error, setError] = useState("");
 
   const fetchData = useCallback(async (silent = false) => {
+    if (silent) setRefreshing(true);
+    else setLoading(true);
+
+    setError("");
+
     try {
-      if (silent) setRefreshing(true);
-      else setLoading(true);
-      setError("");
       const [habitsRes, progressRes] = await Promise.all([
         habitsAPI.getAll(),
         habitsAPI.getWeeklyProgress(),
@@ -54,22 +43,11 @@ const Dashboard = () => {
       setHabits(habitsRes.data);
       setWeeklyProgress(progressRes.data);
 
-      // LIFE ROI is an enhancement. Load it independently so a slow or failed
-      // impact endpoint never blocks the core habit dashboard.
-      if (!silent) setImpactLoading(true);
       habitsAPI.getImpactSummary()
-        .then((impactRes) => {
-          setImpactSummary(impactRes.data);
-          setImpactUnavailable(false);
-        })
-        .catch(() => {
-          setImpactUnavailable(true);
-        })
-        .finally(() => {
-          setImpactLoading(false);
-        });
+        .then(({ data }) => setImpactSummary(data))
+        .catch(() => setImpactSummary(null));
     } catch {
-      setError("Could not load your habits. Check that the API is running and try again.");
+      setError("Could not load your dashboard. Check the API and try again.");
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -78,45 +56,42 @@ const Dashboard = () => {
 
   useEffect(() => {
     fetchData();
-    const timer = setTimeout(() => setMounted(true), 40);
-    return () => clearTimeout(timer);
   }, [fetchData]);
 
-  useEffect(() => {
-    const onKeyDown = (event) => {
-      const tag = document.activeElement?.tagName?.toLowerCase();
-      const typing = tag === "input" || tag === "textarea" || tag === "select";
+  const totalHabits = habits.length;
+  const completedToday = habits.filter((habit) => habit.isCompletedToday).length;
+  const remaining = Math.max(0, totalHabits - completedToday);
+  const todayRate = totalHabits ? Math.round((completedToday / totalHabits) * 100) : 0;
+  const topStreak = totalHabits ? Math.max(...habits.map((habit) => habit.currentStreak || 0)) : 0;
+  const weekCompleted = weeklyProgress.reduce((sum, day) => sum + day.completed, 0);
+  const weekPossible = weeklyProgress.reduce((sum, day) => sum + day.total, 0);
+  const weekRate = weekPossible ? Math.round((weekCompleted / weekPossible) * 100) : 0;
 
-      if (event.key === "/" && !typing) {
-        event.preventDefault();
-        searchRef.current?.focus();
-      }
+  const openHabits = useMemo(
+    () => habits
+      .filter((habit) => !habit.isCompletedToday)
+      .sort((a, b) => (b.currentStreak || 0) - (a.currentStreak || 0)),
+    [habits]
+  );
 
-      if (event.key.toLowerCase() === "n" && !typing && !showForm) {
-        event.preventDefault();
-        setEditingHabit(null);
-        setShowForm(true);
-      }
-    };
+  const focusHabit = openHabits[0];
+  const firstName = user?.name?.trim().split(/\s+/)[0];
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
 
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [showForm]);
-
-  const handleToggle = async (habitId, date = null) => {
+  const handleToggle = async (habitId) => {
     const habit = habits.find((item) => item.id === habitId);
-    const isToday = !date || date === new Date().toISOString().split("T")[0];
-    const wasCompleted = isToday ? habit?.isCompletedToday : false;
+    const wasCompleted = Boolean(habit?.isCompletedToday);
 
     try {
       setPendingHabitId(habitId);
-      await logsAPI.toggle({ habitId, ...(date ? { date } : {}) });
+      await logsAPI.toggle({ habitId });
 
-      if (isToday && !wasCompleted) {
+      if (!wasCompleted) {
         confetti({
-          particleCount: 70,
-          spread: 62,
-          origin: { y: 0.62 },
+          particleCount: 54,
+          spread: 56,
+          origin: { y: 0.64 },
           colors: ["#6366f1", "#8b5cf6", "#c4b5fd"],
         });
       }
@@ -129,139 +104,39 @@ const Dashboard = () => {
     }
   };
 
-  const handleCreate = async (formData) => {
-    try {
-      await habitsAPI.create(formData);
-      await fetchData(true);
-      return true;
-    } catch (err) {
-      setError(err.response?.data?.message || "Could not create the habit.");
-      return false;
-    }
-  };
-
-  const handleUpdate = async (formData) => {
-    try {
-      await habitsAPI.update(editingHabit.id, formData);
-      await fetchData(true);
-      setEditingHabit(null);
-      return true;
-    } catch {
-      setError("Could not save your changes.");
-      return false;
-    }
-  };
-
-  const handleDelete = async (id) => {
-    if (!window.confirm("Delete this habit and its history?")) return;
-    try {
-      await habitsAPI.delete(id);
-      await fetchData(true);
-    } catch {
-      setError("Could not delete that habit.");
-    }
-  };
-
-  const totalHabits = habits.length;
-  const totalCompleted = habits.filter((habit) => habit.isCompletedToday).length;
-  const remaining = totalHabits - totalCompleted;
-  const todayRate = totalHabits ? Math.round((totalCompleted / totalHabits) * 100) : 0;
-  const topStreak = totalHabits ? Math.max(...habits.map((habit) => habit.currentStreak || 0)) : 0;
-  const avgCompletion = totalHabits
-    ? Math.round(habits.reduce((sum, habit) => sum + (habit.completionPercentage || 0), 0) / totalHabits)
-    : 0;
-
-  const weekCompleted = weeklyProgress.reduce((sum, day) => sum + day.completed, 0);
-  const weekPossible = weeklyProgress.reduce((sum, day) => sum + day.total, 0);
-  const weekRate = weekPossible ? Math.round((weekCompleted / weekPossible) * 100) : 0;
-
-  const focusHabit = habits
-    .filter((habit) => !habit.isCompletedToday)
-    .sort((a, b) => (b.currentStreak || 0) - (a.currentStreak || 0))[0];
-
-  const strongestHabit = habits
-    .slice()
-    .sort((a, b) => (b.completionPercentage || 0) - (a.completionPercentage || 0))[0];
-
-  const visibleHabits = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase();
-    const next = habits.filter((habit) => {
-      const matchesFilter =
-        filter === "all" ||
-        (filter === "active" && !habit.isCompletedToday) ||
-        (filter === "done" && habit.isCompletedToday);
-      const matchesQuery =
-        !normalizedQuery ||
-        habit.title.toLowerCase().includes(normalizedQuery) ||
-        habit.description?.toLowerCase().includes(normalizedQuery);
-      return matchesFilter && matchesQuery;
-    });
-
-    return next.sort((a, b) => {
-      if (sortBy === "streak") return (b.currentStreak || 0) - (a.currentStreak || 0);
-      if (sortBy === "consistency") return (b.completionPercentage || 0) - (a.completionPercentage || 0);
-      if (sortBy === "name") return a.title.localeCompare(b.title);
-      if (sortBy === "newest") return new Date(b.createdAt) - new Date(a.createdAt);
-      if (a.isCompletedToday !== b.isCompletedToday) return a.isCompletedToday ? 1 : -1;
-      return (b.currentStreak || 0) - (a.currentStreak || 0);
-    });
-  }, [habits, filter, query, sortBy]);
-
-  const exportCsv = () => {
-    const rows = [
-      ["Habit", "Description", "Frequency", "Current streak", "Best streak", "30-day completion", "Done today", "Estimated money saved", "Minutes recovered", "Minutes invested"],
-      ...habits.map((habit) => [
-        habit.title,
-        habit.description || "",
-        habit.targetType,
-        habit.currentStreak || 0,
-        habit.bestStreak || 0,
-        `${habit.completionPercentage || 0}%`,
-        habit.isCompletedToday ? "Yes" : "No",
-        habit.totalMoneySaved || 0,
-        habit.totalMinutesSaved || 0,
-        habit.totalMinutesInvested || 0,
-      ]),
-    ];
-    const csv = rows.map((row) => row.map(csvCell).join(",")).join("\n");
-    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `habit-architecture-${new Date().toISOString().split("T")[0]}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const hour = new Date().getHours();
-  const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
-  const firstName = user?.name?.trim().split(/\s+/)[0];
-
-  const summary = totalHabits === 0
-    ? "Start with one habit. Keep the system small enough to repeat."
-    : todayRate === 100
-      ? "Everything planned for today is complete."
-      : `${remaining} ${remaining === 1 ? "habit" : "habits"} left today. Keep the next action obvious.`;
+  if (loading) {
+    return (
+      <main className="product-page dashboard-overview-page">
+        <div className="page-loading-skeleton">
+          <span />
+          <span />
+          <span />
+        </div>
+      </main>
+    );
+  }
 
   return (
-    <main className={`dashboard-v2 ${mounted ? "is-ready" : ""}`}>
-      <div className="dashboard-ambient dashboard-ambient-a" />
-      <div className="dashboard-ambient dashboard-ambient-b" />
-
-      <header className="dashboard-heading">
+    <main className="product-page dashboard-overview-page">
+      <header className="product-page-header">
         <div>
-          <span className="dashboard-kicker">Today</span>
+          <span className="product-page-kicker">Overview</span>
           <h1>{greeting}{firstName ? `, ${firstName}` : ""}.</h1>
-          <p>{summary}</p>
+          <p>See today, your recent rhythm, and the return your habits are creating.</p>
         </div>
-        <div className="dashboard-heading-actions">
-          <button className="dash-icon-button" onClick={() => fetchData(true)} disabled={refreshing} aria-label="Refresh dashboard">
+        <div className="product-page-actions">
+          <button
+            type="button"
+            className="dash-icon-button"
+            onClick={() => fetchData(true)}
+            disabled={refreshing}
+            aria-label="Refresh dashboard"
+          >
             <PiArrowClockwiseBold className={refreshing ? "is-spinning" : ""} />
           </button>
-          <button className="dash-primary-button" onClick={() => { setEditingHabit(null); setShowForm(true); }}>
-            <PiPlusBold />
-            <span>New habit</span>
-            <kbd>N</kbd>
-          </button>
+          <Link className="dash-primary-button" to="/habits" state={{ openCreate: true }}>
+            <PiTargetBold /> New habit
+          </Link>
         </div>
       </header>
 
@@ -271,246 +146,167 @@ const Dashboard = () => {
         </Alert>
       )}
 
-      <section className="today-overview" aria-label="Today's progress">
-        <div className="today-progress-block">
-          <div className="today-ring" style={{ "--progress": `${todayRate * 3.6}deg` }}>
+      <section className="overview-command-card" aria-label="Today overview">
+        <div className="overview-command-main">
+          <div className="today-ring overview-ring" style={{ "--progress": `${todayRate * 3.6}deg` }}>
             <div className="today-ring-inner">
               <strong>{todayRate}%</strong>
               <span>today</span>
             </div>
           </div>
-          <div className="today-copy">
-            <span className="today-label">Daily progress</span>
-            <h2>{totalCompleted} of {totalHabits} complete</h2>
-            <p>{focusHabit ? `Next up: ${focusHabit.title}` : totalHabits ? "Your list is clear for today." : "Create a habit to begin tracking."}</p>
+
+          <div className="overview-command-copy">
+            <span className="section-label">Today</span>
+            <h2>{completedToday} of {totalHabits} complete</h2>
+            <p>
+              {totalHabits === 0
+                ? "Start with one habit and keep the system easy to repeat."
+                : remaining === 0
+                  ? "Your planned habits are complete for today."
+                  : `${remaining} ${remaining === 1 ? "habit" : "habits"} still open.`}
+            </p>
+
+            {focusHabit ? (
+              <div className="overview-next-action">
+                <div>
+                  <span>Next action</span>
+                  <strong>{focusHabit.title}</strong>
+                  {focusHabit.currentStreak > 0 && <small>{focusHabit.currentStreak} day streak in progress</small>}
+                </div>
+                <button
+                  type="button"
+                  className="focus-complete-button"
+                  onClick={() => handleToggle(focusHabit.id)}
+                  disabled={pendingHabitId === focusHabit.id}
+                >
+                  <PiCheckBold /> {pendingHabitId === focusHabit.id ? "Updating" : "Complete"}
+                </button>
+              </div>
+            ) : totalHabits > 0 ? (
+              <div className="overview-all-done"><PiCheckCircleBold /> All done for today</div>
+            ) : (
+              <Link className="focus-complete-button" to="/habits" state={{ openCreate: true }}>
+                Create first habit
+              </Link>
+            )}
           </div>
         </div>
 
-        <div className="today-focus-action">
-          {focusHabit ? (
-            <button
-              className="focus-complete-button"
-              onClick={() => handleToggle(focusHabit.id)}
-              disabled={pendingHabitId === focusHabit.id}
-            >
-              <PiCheckBold />
-              {pendingHabitId === focusHabit.id ? "Updating" : "Complete next"}
-            </button>
-          ) : totalHabits ? (
-            <div className="all-done-note"><PiCheckCircleBold /> All done today</div>
-          ) : (
-            <button className="focus-complete-button" onClick={() => setShowForm(true)}><PiPlusBold /> Add first habit</button>
-          )}
-        </div>
-      </section>
-
-      <section className="life-impact-panel" aria-labelledby="life-impact-title">
-        <div className="life-impact-heading">
+        <div className="overview-ledger" aria-label="Current habit metrics">
           <div>
-            <span className="life-impact-kicker">Life ROI</span>
-            <h2 id="life-impact-title">What your better habits give back</h2>
-            <p>Estimated from the values you entered and your completed habit history.</p>
+            <PiFlameBold />
+            <span>Top streak</span>
+            <strong>{topStreak}d</strong>
           </div>
-          {impactSummary?.impactHabitCount > 0 && (
-            <span className="life-impact-count">{impactSummary.impactHabitCount} impact {impactSummary.impactHabitCount === 1 ? "habit" : "habits"}</span>
-          )}
-        </div>
-
-        {impactLoading && !impactSummary ? (
-          <div className="life-impact-empty compact">
-            <strong>Calculating Life ROI...</strong>
-            <span>Your habits are already available while this summary loads.</span>
+          <div>
+            <PiCalendarCheckBold />
+            <span>This week</span>
+            <strong>{weekRate}%</strong>
           </div>
-        ) : impactUnavailable ? (
-          <div className="life-impact-empty compact">
-            <strong>Life ROI is temporarily unavailable.</strong>
-            <span>Your habit tracking is still up to date.</span>
-          </div>
-        ) : !impactSummary || impactSummary.impactHabitCount === 0 ? (
-          <div className="life-impact-empty">
-            <div>
-              <strong>Add money or time impact to a habit to see your Life ROI.</strong>
-              <span>Impact fields are optional, so normal habits continue to work exactly as before.</span>
-            </div>
-            <button className="dash-secondary-button" onClick={() => { setEditingHabit(null); setShowForm(true); }}>
-              <PiPlusBold /> Add impact habit
-            </button>
-          </div>
-        ) : (
-          <div className="life-impact-layout">
-            <div className="life-impact-money">
-              <span>Estimated savings</span>
-              <strong>{formatCurrency(impactSummary.totalMoneySaved)}</strong>
-              <small>{formatCurrency(impactSummary.moneySavedLast30Days)} from completions in the last 30 days</small>
-            </div>
-
-            <div className="life-impact-time">
-              <div>
-                <span>Time recovered</span>
-                <strong>{formatMinutes(impactSummary.totalMinutesSaved)}</strong>
-                <small>{formatMinutes(impactSummary.minutesSavedLast30Days)} in the last 30 days</small>
-              </div>
-              <div>
-                <span>Time invested</span>
-                <strong>{formatMinutes(impactSummary.totalMinutesInvested)}</strong>
-                <small>{formatMinutes(impactSummary.minutesInvestedLast30Days)} in useful activities recently</small>
-              </div>
-            </div>
-
-            <div className="life-impact-completions">
-              <span>Successful changes</span>
-              <strong>{impactSummary.totalSuccessfulCompletions}</strong>
-              <small>Completed logs across impact-enabled habits</small>
-            </div>
-          </div>
-        )}
-      </section>
-
-      <section className="metric-strip" aria-label="Habit metrics">
-        <div className="metric-item">
-          <PiFlameBold />
-          <div><strong>{topStreak}</strong><span>Top streak</span></div>
-        </div>
-        <div className="metric-item">
-          <PiTargetBold />
-          <div><strong>{avgCompletion}%</strong><span>30-day average</span></div>
-        </div>
-        <div className="metric-item">
-          <PiCalendarCheckBold />
-          <div><strong>{weekRate}%</strong><span>This week</span></div>
-        </div>
-        <div className="metric-item">
-          <PiTrophyBold />
-          <div><strong>{strongestHabit?.title || "No data"}</strong><span>Most consistent</span></div>
-        </div>
-      </section>
-
-      <section className="dashboard-insights-grid">
-        <div className="dashboard-panel progress-panel">
-          <div className="panel-heading">
-            <div>
-              <h2>Last 7 days</h2>
-              <p>Completed habits compared with your total active habits.</p>
-            </div>
-            <strong className="week-rate">{weekRate}%</strong>
-          </div>
-          {weeklyProgress.length ? <ProgressChart data={weeklyProgress} /> : <div className="chart-empty">Weekly progress appears after you create a habit.</div>}
-        </div>
-
-        <aside className="dashboard-panel momentum-panel">
-          <h2>Momentum</h2>
-          <p className="momentum-lead">
-            {topStreak > 0
-              ? `Your longest active chain is ${topStreak} ${topStreak === 1 ? "day" : "days"}.`
-              : "Complete a habit today to start your first streak."}
-          </p>
-          <div className="momentum-stat">
-            <span>Week completions</span>
-            <strong>{weekCompleted}</strong>
-          </div>
-          <div className="momentum-stat">
-            <span>Habits tracked</span>
-            <strong>{totalHabits}</strong>
-          </div>
-          <div className="momentum-stat">
-            <span>Still open today</span>
+          <div>
+            <PiTargetBold />
+            <span>Still open</span>
             <strong>{remaining}</strong>
           </div>
-        </aside>
-
-        <AIWeeklyReview habitCount={totalHabits} identity={user?.email} />
+        </div>
       </section>
 
-      <section className="habits-section">
-        <div className="habits-section-heading">
-          <div>
-            <h2>Your habits</h2>
-            <p>Search, sort, edit, or correct any of the last seven days.</p>
+      <section className="overview-impact-strip" aria-label="Life ROI summary">
+        <div className="overview-impact-intro">
+          <span className="section-label">Life ROI</span>
+          <h2>What your better habits gave back</h2>
+          <p>Estimated from the money and time values you chose for each habit.</p>
+          <Link to="/impact" className="text-action-link">Open Life ROI <PiArrowRightBold /></Link>
+        </div>
+
+        {impactSummary && impactSummary.impactHabitCount > 0 ? (
+          <div className="overview-impact-values">
+            <div className="impact-primary-value">
+              <PiPiggyBankBold />
+              <span>Estimated savings</span>
+              <strong>{formatCurrency(impactSummary.totalMoneySaved)}</strong>
+              <small>{formatCurrency(impactSummary.moneySavedLast30Days)} in the last 30 days</small>
+            </div>
+            <div className="impact-secondary-values">
+              <div>
+                <PiClockBold />
+                <span>Time recovered</span>
+                <strong>{formatMinutes(impactSummary.totalMinutesSaved)}</strong>
+              </div>
+              <div>
+                <PiTimerBold />
+                <span>Time invested</span>
+                <strong>{formatMinutes(impactSummary.totalMinutesInvested)}</strong>
+              </div>
+            </div>
           </div>
-          {habits.length > 0 && (
-            <button className="dash-secondary-button" onClick={exportCsv}>
-              <PiDownloadSimpleBold /> Export CSV
-            </button>
+        ) : (
+          <div className="overview-impact-empty">
+            <PiPiggyBankBold />
+            <div>
+              <strong>Add impact to a habit to unlock Life ROI.</strong>
+              <span>Money saved, time recovered, and useful time invested stay separate.</span>
+            </div>
+          </div>
+        )}
+      </section>
+
+      <section className="overview-lower-grid">
+        <div className="dashboard-panel overview-week-panel">
+          <div className="panel-heading compact-panel-heading">
+            <div>
+              <span className="section-label">Rhythm</span>
+              <h2>Last 7 days</h2>
+              <p>{weekCompleted} completions across your current habits.</p>
+            </div>
+            <Link to="/reports" className="text-action-link">View report <PiArrowRightBold /></Link>
+          </div>
+          {weeklyProgress.length > 0 ? (
+            <ProgressChart data={weeklyProgress} />
+          ) : (
+            <div className="chart-empty">Weekly progress appears after you create a habit.</div>
           )}
         </div>
 
-        {habits.length > 0 && (
-          <div className="habit-commandbar">
-            <label className="habit-search">
-              <PiMagnifyingGlassBold />
-              <input
-                ref={searchRef}
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="Search habits"
-                aria-label="Search habits"
-              />
-              <kbd>/</kbd>
-            </label>
+        <aside className="dashboard-panel overview-open-panel">
+          <div className="panel-heading compact-panel-heading">
+            <div>
+              <span className="section-label">Open today</span>
+              <h2>Keep the next move small</h2>
+            </div>
+          </div>
 
-            <div className="filter-tabs dashboard-filter-tabs">
-              {[
-                { key: "all", label: "All", count: totalHabits },
-                { key: "active", label: "Open", count: remaining },
-                { key: "done", label: "Done", count: totalCompleted },
-              ].map((tab) => (
-                <button key={tab.key} className={`filter-tab ${filter === tab.key ? "active" : ""}`} onClick={() => setFilter(tab.key)}>
-                  {tab.label}<span className={`filter-count ${filter === tab.key ? "active" : ""}`}>{tab.count}</span>
-                </button>
+          {openHabits.length > 0 ? (
+            <div className="overview-open-list">
+              {openHabits.slice(0, 3).map((habit) => (
+                <div className="overview-open-item" key={habit.id}>
+                  <div>
+                    <strong>{habit.title}</strong>
+                    <span>{habit.currentStreak || 0} day streak</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleToggle(habit.id)}
+                    disabled={pendingHabitId === habit.id}
+                    aria-label={`Complete ${habit.title}`}
+                  >
+                    <PiCheckBold />
+                  </button>
+                </div>
               ))}
             </div>
+          ) : (
+            <div className="overview-open-empty">
+              <PiCheckCircleBold />
+              <span>{totalHabits ? "Nothing else is open today." : "Create a habit to start your daily list."}</span>
+            </div>
+          )}
 
-            <select className="habit-sort" value={sortBy} onChange={(event) => setSortBy(event.target.value)} aria-label="Sort habits">
-              <option value="priority">Priority</option>
-              <option value="streak">Longest streak</option>
-              <option value="consistency">Best consistency</option>
-              <option value="newest">Newest</option>
-              <option value="name">Name</option>
-            </select>
-          </div>
-        )}
-
-        {loading ? (
-          <div className="habit-skeleton-grid" aria-label="Loading habits">
-            {[0, 1, 2].map((item) => <div className="habit-skeleton" key={item} />)}
-          </div>
-        ) : habits.length === 0 ? (
-          <div className="dashboard-empty">
-            <div className="dashboard-empty-icon"><PiTargetBold /></div>
-            <h3>Build your first routine</h3>
-            <p>One clear habit is enough to start. You can add more when the first one feels automatic.</p>
-            <button className="dash-primary-button" onClick={() => setShowForm(true)}><PiPlusBold /> New habit</button>
-          </div>
-        ) : visibleHabits.length === 0 ? (
-          <div className="dashboard-empty compact-empty">
-            <h3>No matching habits</h3>
-            <p>Try another search or filter.</p>
-            <button className="dash-secondary-button" onClick={() => { setQuery(""); setFilter("all"); }}>Clear filters</button>
-          </div>
-        ) : (
-          <div className="habit-grid dashboard-habit-grid">
-            {visibleHabits.map((habit, index) => (
-              <HabitCard
-                key={habit.id}
-                habit={habit}
-                index={index}
-                busy={pendingHabitId === habit.id}
-                onToggle={handleToggle}
-                onToggleDate={(date) => handleToggle(habit.id, date)}
-                onEdit={(selected) => { setEditingHabit(selected); setShowForm(true); }}
-                onDelete={handleDelete}
-              />
-            ))}
-          </div>
-        )}
+          <Link to="/habits" className="panel-footer-link">
+            Manage all habits <PiArrowRightBold />
+          </Link>
+        </aside>
       </section>
-
-      <HabitForm
-        show={showForm}
-        onHide={() => { setShowForm(false); setEditingHabit(null); }}
-        onSubmit={editingHabit ? handleUpdate : handleCreate}
-        habit={editingHabit}
-      />
     </main>
   );
 };

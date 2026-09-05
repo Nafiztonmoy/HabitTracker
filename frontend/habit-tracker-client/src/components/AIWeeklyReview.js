@@ -89,7 +89,7 @@ const AIWeeklyReview = ({ habitCount, identity }) => {
       ) : configured === false ? (
         <div className="ai-review-config">
           <PiWarningCircleBold />
-          <span>Add your xAI API key to the backend to enable the AI features.</span>
+          <span>Add your Groq API key to the backend to enable the AI features.</span>
         </div>
       ) : error ? (
         <div className="ai-review-config is-error">
