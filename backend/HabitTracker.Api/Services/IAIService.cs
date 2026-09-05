@@ -17,5 +17,10 @@ namespace HabitTracker.Services
             IReadOnlyCollection<HabitResponse> habits,
             IReadOnlyCollection<WeeklyProgressResponse> weeklyProgress,
             CancellationToken cancellationToken = default);
+
+        Task<FutureMeAIResponse> GenerateFutureMeInsightAsync(
+            FutureMeProjectionResponse projection,
+            IReadOnlyCollection<HabitResponse> habits,
+            CancellationToken cancellationToken = default);
     }
 }

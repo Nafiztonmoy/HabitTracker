@@ -105,5 +105,42 @@ namespace HabitTracker.Controllers
                 });
             }
         }
+        [HttpPost("future-me")]
+        public async Task<IActionResult> FutureMe(CancellationToken cancellationToken)
+        {
+            if (!_aiService.IsConfigured)
+            {
+                return StatusCode(StatusCodes.Status503ServiceUnavailable, new
+                {
+                    message = "Groq AI is not configured. Add Groq:ApiKey to the backend configuration."
+                });
+            }
+
+            try
+            {
+                var userId = GetUserId();
+                var projection = await _habitService.GetFutureMeProjectionAsync(userId);
+
+                if (projection.ImpactHabitCount == 0)
+                    return BadRequest(new { message = "Add money or time impact to at least one habit first." });
+
+                var habits = (await _habitService.GetUserHabitsAsync(userId)).ToList();
+                var insight = await _aiService.GenerateFutureMeInsightAsync(projection, habits, cancellationToken);
+                return Ok(insight);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                return StatusCode(499);
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"Groq future-me error: {ex}");
+                return StatusCode(StatusCodes.Status502BadGateway, new
+                {
+                    message = ex.Message
+                });
+            }
+        }
+
     }
 }

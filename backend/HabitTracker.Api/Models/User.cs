@@ -20,5 +20,6 @@ namespace HabitTracker.Models
         // Navigation property
         public ICollection<Habit> Habits { get; set; } = new List<Habit>();
         public ICollection<ExternalLogin> ExternalLogins { get; set; } = new List<ExternalLogin>();
+        public ICollection<SavingsGoal> SavingsGoals { get; set; } = new List<SavingsGoal>();
     }
 }

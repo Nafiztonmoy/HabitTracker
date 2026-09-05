@@ -214,6 +214,111 @@ namespace HabitTracker.Services
             return response;
         }
 
+        public async Task<TimeBankResponse> GetTimeBankAsync(int userId)
+        {
+            var habits = await _context.Habits
+                .Where(h => h.UserId == userId && h.MinutesSavedPerCompletion > 0)
+                .Include(h => h.HabitLogs.Where(l => l.Completed))
+                .ToListAsync();
+
+            var today = DateTime.UtcNow.Date;
+            var sevenDaysAgo = today.AddDays(-6);
+            var thirtyDaysAgo = today.AddDays(-29);
+
+            var response = new TimeBankResponse
+            {
+                ImpactHabitCount = habits.Count
+            };
+
+            foreach (var habit in habits)
+            {
+                var completedLogs = habit.HabitLogs.Where(l => l.Completed).ToList();
+                var totalMinutes = completedLogs.Count * habit.MinutesSavedPerCompletion;
+                var last30 = completedLogs.Count(l => l.Date.Date >= thirtyDaysAgo) * habit.MinutesSavedPerCompletion;
+                var last7 = completedLogs.Count(l => l.Date.Date >= sevenDaysAgo) * habit.MinutesSavedPerCompletion;
+
+                response.TotalMinutesRecovered += totalMinutes;
+                response.MinutesRecoveredLast30Days += last30;
+                response.MinutesRecoveredLast7Days += last7;
+
+                if (totalMinutes > response.TopSourceMinutes)
+                {
+                    response.TopSourceMinutes = totalMinutes;
+                    response.TopSourceTitle = habit.Title;
+                }
+            }
+
+            return response;
+        }
+
+        public async Task<FutureMeProjectionResponse> GetFutureMeProjectionAsync(int userId)
+        {
+            var today = DateTime.UtcNow.Date;
+            var thirtyDaysAgo = today.AddDays(-29);
+
+            var habits = await _context.Habits
+                .Where(h => h.UserId == userId &&
+                    (h.MoneySavedPerCompletion > 0 ||
+                     h.MinutesSavedPerCompletion > 0 ||
+                     h.MinutesInvestedPerCompletion > 0))
+                .Include(h => h.HabitLogs.Where(l => l.Completed && l.Date >= thirtyDaysAgo))
+                .ToListAsync();
+
+            var recentLogs = habits
+                .SelectMany(h => h.HabitLogs.Where(l => l.Completed))
+                .ToList();
+
+            var paceWindowDays = recentLogs.Count == 0
+                ? 30
+                : Math.Clamp((today - recentLogs.Min(l => l.Date.Date)).Days + 1, 1, 30);
+
+            decimal moneyLastWindow = 0m;
+            var minutesSavedLastWindow = 0;
+            var minutesInvestedLastWindow = 0;
+
+            foreach (var habit in habits)
+            {
+                var completions = habit.HabitLogs.Count(l => l.Completed);
+                moneyLastWindow += completions * habit.MoneySavedPerCompletion;
+                minutesSavedLastWindow += completions * habit.MinutesSavedPerCompletion;
+                minutesInvestedLastWindow += completions * habit.MinutesInvestedPerCompletion;
+            }
+
+            var moneyPerDay = paceWindowDays > 0
+                ? decimal.Round(moneyLastWindow / paceWindowDays, 2)
+                : 0m;
+            var minutesRecoveredPerDay = paceWindowDays > 0
+                ? (double)minutesSavedLastWindow / paceWindowDays
+                : 0d;
+            var minutesInvestedPerDay = paceWindowDays > 0
+                ? (double)minutesInvestedLastWindow / paceWindowDays
+                : 0d;
+
+            var periods = new[]
+            {
+                (Days: 30, Label: "30 days"),
+                (Days: 90, Label: "90 days"),
+                (Days: 365, Label: "1 year")
+            };
+
+            return new FutureMeProjectionResponse
+            {
+                PaceWindowDays = paceWindowDays,
+                MoneySavedPerDay = moneyPerDay,
+                MinutesRecoveredPerDay = Math.Round(minutesRecoveredPerDay, 2),
+                MinutesInvestedPerDay = Math.Round(minutesInvestedPerDay, 2),
+                ImpactHabitCount = habits.Count,
+                Periods = periods.Select(period => new FutureProjectionPeriod
+                {
+                    Days = period.Days,
+                    Label = period.Label,
+                    ProjectedMoneySaved = decimal.Round(moneyPerDay * period.Days, 2),
+                    ProjectedMinutesRecovered = (int)Math.Round(minutesRecoveredPerDay * period.Days),
+                    ProjectedMinutesInvested = (int)Math.Round(minutesInvestedPerDay * period.Days)
+                }).ToList()
+            };
+        }
+
         private static string? NormalizeColor(string? color)
         {
             if (string.IsNullOrWhiteSpace(color)) return null;

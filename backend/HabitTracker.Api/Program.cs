@@ -21,6 +21,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IHabitService, HabitService>();
+builder.Services.AddScoped<IGoalService, GoalService>();
 builder.Services.AddScoped<IAIService, GrokAIService>();
 builder.Services.AddHttpClient();
 

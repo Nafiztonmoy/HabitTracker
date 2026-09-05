@@ -11,6 +11,7 @@ namespace HabitTracker.Data
         public DbSet<Habit> Habits => Set<Habit>();
         public DbSet<HabitLog> HabitLogs => Set<HabitLog>();
         public DbSet<ExternalLogin> ExternalLogins => Set<ExternalLogin>();
+        public DbSet<SavingsGoal> SavingsGoals => Set<SavingsGoal>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -57,6 +58,11 @@ namespace HabitTracker.Data
                 entity.HasMany(u => u.ExternalLogins)
                     .WithOne(login => login.User)
                     .HasForeignKey(login => login.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasMany(u => u.SavingsGoals)
+                    .WithOne(goal => goal.User)
+                    .HasForeignKey(goal => goal.UserId)
                     .OnDelete(DeleteBehavior.Cascade);
             });
 
@@ -161,6 +167,51 @@ namespace HabitTracker.Data
                 // Index for date range queries (weekly progress)
                 entity.HasIndex(l => l.Date)
                     .HasDatabaseName("IX_HabitLogs_Date");
+            });
+
+
+            // ============================================
+            // SAVINGS GOAL CONFIGURATION
+            // ============================================
+
+            modelBuilder.Entity<SavingsGoal>(entity =>
+            {
+                entity.HasKey(goal => goal.Id);
+
+                entity.Property(goal => goal.Id)
+                    .ValueGeneratedOnAdd();
+
+                entity.Property(goal => goal.Name)
+                    .IsRequired()
+                    .HasMaxLength(120);
+
+                entity.Property(goal => goal.TargetAmount)
+                    .HasPrecision(18, 2);
+
+                entity.Property(goal => goal.StartingAmount)
+                    .HasPrecision(18, 2)
+                    .HasDefaultValue(0m);
+
+                entity.Property(goal => goal.AccumulatedHabitSavings)
+                    .HasPrecision(18, 2)
+                    .HasDefaultValue(0m);
+
+                entity.Property(goal => goal.SavingsBaselineAtActivation)
+                    .HasPrecision(18, 2)
+                    .HasDefaultValue(0m);
+
+                entity.Property(goal => goal.IsActive)
+                    .HasDefaultValue(false);
+
+                entity.Property(goal => goal.CreatedAt)
+                    .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                    .IsRequired();
+
+                entity.Property(goal => goal.TargetDate)
+                    .HasColumnType("date");
+
+                entity.HasIndex(goal => goal.UserId)
+                    .HasDatabaseName("IX_SavingsGoals_UserId");
             });
 
             // ============================================

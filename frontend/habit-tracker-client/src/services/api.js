@@ -53,7 +53,17 @@ export const habitsAPI = {
   update: (id, data) => api.put(`/habits/${id}`, data),
   delete: (id) => api.delete(`/habits/${id}`),
   getWeeklyProgress: () => api.get('/habits/weekly-progress'),
-  getImpactSummary: () => api.get('/habits/impact-summary')
+  getImpactSummary: () => api.get('/habits/impact-summary'),
+  getTimeBank: () => api.get('/habits/time-bank'),
+  getFutureMe: () => api.get('/habits/future-me')
+};
+
+export const goalsAPI = {
+  getAll: () => api.get('/goals'),
+  create: (data) => api.post('/goals', data),
+  update: (id, data) => api.put(`/goals/${id}`, data),
+  activate: (id) => api.post(`/goals/${id}/activate`),
+  delete: (id) => api.delete(`/goals/${id}`)
 };
 
 export const logsAPI = {
@@ -64,6 +74,7 @@ export const logsAPI = {
 export const aiAPI = {
   status: () => api.get('/ai/status'),
   suggestHabit: (data) => api.post('/ai/smart-habit', data),
-  weeklyReview: () => api.post('/ai/weekly-review')
+  weeklyReview: () => api.post('/ai/weekly-review'),
+  futureMe: () => api.post('/ai/future-me')
 };
 

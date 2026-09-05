@@ -66,5 +66,17 @@ namespace HabitTracker.Controllers
             var summary = await _habitService.GetImpactSummaryAsync(GetUserId());
             return Ok(summary);
         }
+
+        [HttpGet("time-bank")]
+        public async Task<IActionResult> GetTimeBank()
+        {
+            return Ok(await _habitService.GetTimeBankAsync(GetUserId()));
+        }
+
+        [HttpGet("future-me")]
+        public async Task<IActionResult> GetFutureMe()
+        {
+            return Ok(await _habitService.GetFutureMeProjectionAsync(GetUserId()));
+        }
     }
 }

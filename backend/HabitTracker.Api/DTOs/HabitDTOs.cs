@@ -85,6 +85,36 @@ namespace HabitTracker.DTOs
         public int ImpactHabitCount { get; set; }
     }
 
+
+    public class TimeBankResponse
+    {
+        public int TotalMinutesRecovered { get; set; }
+        public int MinutesRecoveredLast30Days { get; set; }
+        public int MinutesRecoveredLast7Days { get; set; }
+        public string? TopSourceTitle { get; set; }
+        public int TopSourceMinutes { get; set; }
+        public int ImpactHabitCount { get; set; }
+    }
+
+    public class FutureProjectionPeriod
+    {
+        public int Days { get; set; }
+        public string Label { get; set; } = string.Empty;
+        public decimal ProjectedMoneySaved { get; set; }
+        public int ProjectedMinutesRecovered { get; set; }
+        public int ProjectedMinutesInvested { get; set; }
+    }
+
+    public class FutureMeProjectionResponse
+    {
+        public int PaceWindowDays { get; set; }
+        public decimal MoneySavedPerDay { get; set; }
+        public double MinutesRecoveredPerDay { get; set; }
+        public double MinutesInvestedPerDay { get; set; }
+        public int ImpactHabitCount { get; set; }
+        public List<FutureProjectionPeriod> Periods { get; set; } = new();
+    }
+
     public class CalendarDay
     {
         public string Date { get; set; } = string.Empty;

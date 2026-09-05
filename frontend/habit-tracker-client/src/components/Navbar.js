@@ -4,10 +4,12 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import {
   PiChartLineUpBold,
+  PiClockBold,
   PiCheckSquareBold,
   PiFlameBold,
   PiHouseBold,
   PiPiggyBankBold,
+  PiTargetBold,
   PiSignOutBold,
   PiSunBold,
   PiMoonBold,
@@ -18,6 +20,8 @@ const navItems = [
   { to: "/dashboard", label: "Overview", icon: PiHouseBold },
   { to: "/habits", label: "Habits", icon: PiCheckSquareBold },
   { to: "/impact", label: "Life ROI", icon: PiPiggyBankBold },
+  { to: "/goals", label: "Goals", icon: PiTargetBold },
+  { to: "/future-me", label: "Future", icon: PiClockBold },
   { to: "/reports", label: "Reports", icon: PiChartLineUpBold },
 ];
 
@@ -49,7 +53,7 @@ const AppNavbar = () => {
         <div className="navbar-flex-row product-navbar-row">
           <Link to="/dashboard" className="navbar-brand-glass">
             <div className="brand-logo-gradient"><PiFlameBold /></div>
-            <span className="brand-name">Habit Architecture</span>
+            <span className="brand-name">Cadence</span>
           </Link>
 
           {isAuthenticated && !isAuthRoute && (

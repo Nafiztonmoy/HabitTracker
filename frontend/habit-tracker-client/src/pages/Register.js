@@ -54,7 +54,7 @@ const Register = () => {
             <PiFlameBold className="auth-brand-icon" />
           </div>
           <div>
-            <span className="auth-form-kicker">Habit Architecture</span>
+            <span className="auth-form-kicker">Cadence</span>
             <h2 className="auth-title">Create your account</h2>
           </div>
         </div>

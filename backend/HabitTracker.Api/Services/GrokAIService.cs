@@ -62,6 +62,7 @@ namespace HabitTracker.Services
                   indigo, violet, blue, cyan, emerald, amber, orange, rose.
                 - Do not duplicate an existing habit.
                 - The reason should briefly explain why the suggested habit is achievable.
+                - Do not use em dash or en dash characters.
                 """;
 
             var userPrompt = $"""
@@ -169,6 +170,7 @@ namespace HabitTracker.Services
                 - win: the clearest positive pattern.
                 - watch: the most important area needing attention.
                 - nextAction: one realistic action for the coming week.
+                - Do not use em dash or en dash characters.
                 """;
 
             var userPrompt = $"""
@@ -235,6 +237,69 @@ namespace HabitTracker.Services
             }
 
             return review;
+        }
+
+        public async Task<FutureMeAIResponse> GenerateFutureMeInsightAsync(
+            FutureMeProjectionResponse projection,
+            IReadOnlyCollection<HabitResponse> habits,
+            CancellationToken cancellationToken = default)
+        {
+            EnsureConfigured();
+
+            var projectionJson = JsonSerializer.Serialize(projection, JsonOptions);
+            var habitsJson = JsonSerializer.Serialize(habits, JsonOptions);
+
+            var systemPrompt = """
+                You are an assistant inside a habit tracking application.
+
+                Explain the deterministic Future Me projection supplied by the application.
+                Do not invent money, time, completion counts, dates, or percentages.
+                Treat the projection as an estimate if the recent pace continues.
+
+                Requirements:
+                - headline: short and grounded.
+                - summary: 1 or 2 concise sentences about the projection.
+                - bestLever: name the habit or impact area that appears most useful from the supplied data.
+                - nextAction: one small action that could help maintain the current pace.
+                - Do not use em dash or en dash characters.
+                """;
+
+            var userPrompt = $"""
+                Calculated Future Me projection:
+                {projectionJson}
+
+                Current habits and calculated statistics:
+                {habitsJson}
+                """;
+
+            var schema = new
+            {
+                type = "object",
+                properties = new
+                {
+                    headline = new { type = "string" },
+                    summary = new { type = "string" },
+                    bestLever = new { type = "string" },
+                    nextAction = new { type = "string" }
+                },
+                required = new[] { "headline", "summary", "bestLever", "nextAction" },
+                additionalProperties = false
+            };
+
+            var result = await SendStructuredRequestAsync(
+                systemPrompt,
+                userPrompt,
+                "future_me_insight",
+                schema,
+                cancellationToken);
+
+            var insight = JsonSerializer.Deserialize<FutureMeAIResponse>(result, JsonOptions);
+            if (insight == null)
+            {
+                throw new InvalidOperationException("Groq returned an empty Future Me insight.");
+            }
+
+            return insight;
         }
 
         private async Task<string> SendStructuredRequestAsync(

@@ -13,9 +13,10 @@ import {
   PiPiggyBankBold,
   PiTargetBold,
   PiTimerBold,
+  PiTrendUpBold,
 } from "react-icons/pi";
 import ProgressChart from "../components/ProgressChart";
-import { habitsAPI, logsAPI } from "../services/api";
+import { goalsAPI, habitsAPI, logsAPI } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import { formatCurrency, formatMinutes } from "../utils/formatters";
 
@@ -24,6 +25,8 @@ const Dashboard = () => {
   const [habits, setHabits] = useState([]);
   const [weeklyProgress, setWeeklyProgress] = useState([]);
   const [impactSummary, setImpactSummary] = useState(null);
+  const [goals, setGoals] = useState([]);
+  const [futureMe, setFutureMe] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [pendingHabitId, setPendingHabitId] = useState(null);
@@ -43,9 +46,15 @@ const Dashboard = () => {
       setHabits(habitsRes.data);
       setWeeklyProgress(progressRes.data);
 
-      habitsAPI.getImpactSummary()
-        .then(({ data }) => setImpactSummary(data))
-        .catch(() => setImpactSummary(null));
+      const [impactResult, goalsResult, futureResult] = await Promise.allSettled([
+        habitsAPI.getImpactSummary(),
+        goalsAPI.getAll(),
+        habitsAPI.getFutureMe(),
+      ]);
+
+      setImpactSummary(impactResult.status === "fulfilled" ? impactResult.value.data : null);
+      setGoals(goalsResult.status === "fulfilled" ? goalsResult.value.data || [] : []);
+      setFutureMe(futureResult.status === "fulfilled" ? futureResult.value.data : null);
     } catch {
       setError("Could not load your dashboard. Check the API and try again.");
     } finally {
@@ -75,6 +84,8 @@ const Dashboard = () => {
   );
 
   const focusHabit = openHabits[0];
+  const activeGoal = goals.find((goal) => goal.isActive);
+  const future90 = futureMe?.periods?.find((period) => period.days === 90);
   const firstName = user?.name?.trim().split(/\s+/)[0];
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
@@ -268,44 +279,73 @@ const Dashboard = () => {
           )}
         </div>
 
-        <aside className="dashboard-panel overview-open-panel">
-          <div className="panel-heading compact-panel-heading">
-            <div>
-              <span className="section-label">Open today</span>
-              <h2>Keep the next move small</h2>
+        <div className="overview-side-stack">
+          <aside className="dashboard-panel overview-open-panel">
+            <div className="panel-heading compact-panel-heading">
+              <div>
+                <span className="section-label">Open today</span>
+                <h2>Keep the next move small</h2>
+              </div>
             </div>
-          </div>
 
-          {openHabits.length > 0 ? (
-            <div className="overview-open-list">
-              {openHabits.slice(0, 3).map((habit) => (
-                <div className="overview-open-item" key={habit.id}>
-                  <div>
-                    <strong>{habit.title}</strong>
-                    <span>{habit.currentStreak || 0} day streak</span>
+            {openHabits.length > 0 ? (
+              <div className="overview-open-list">
+                {openHabits.slice(0, 3).map((habit) => (
+                  <div className="overview-open-item" key={habit.id}>
+                    <div>
+                      <strong>{habit.title}</strong>
+                      <span>{habit.currentStreak || 0} day streak</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleToggle(habit.id)}
+                      disabled={pendingHabitId === habit.id}
+                      aria-label={`Complete ${habit.title}`}
+                    >
+                      <PiCheckBold />
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => handleToggle(habit.id)}
-                    disabled={pendingHabitId === habit.id}
-                    aria-label={`Complete ${habit.title}`}
-                  >
-                    <PiCheckBold />
-                  </button>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="overview-open-empty">
-              <PiCheckCircleBold />
-              <span>{totalHabits ? "Nothing else is open today." : "Create a habit to start your daily list."}</span>
-            </div>
-          )}
+                ))}
+              </div>
+            ) : (
+              <div className="overview-open-empty">
+                <PiCheckCircleBold />
+                <span>{totalHabits ? "Nothing else is open today." : "Create a habit to start your daily list."}</span>
+              </div>
+            )}
 
-          <Link to="/habits" className="panel-footer-link">
-            Manage all habits <PiArrowRightBold />
-          </Link>
-        </aside>
+            <Link to="/habits" className="panel-footer-link">
+              Manage all habits <PiArrowRightBold />
+            </Link>
+          </aside>
+
+          <aside className="dashboard-panel overview-forward-panel">
+            <div className="overview-forward-icon">{activeGoal ? <PiTargetBold /> : <PiTrendUpBold />}</div>
+            {activeGoal ? (
+              <>
+                <span className="section-label">Active goal</span>
+                <h2>{activeGoal.name}</h2>
+                <div className="overview-goal-progress"><span style={{ width: `${Math.min(100, activeGoal.progressPercentage || 0)}%` }} /></div>
+                <div className="overview-forward-stat"><strong>{activeGoal.progressPercentage}%</strong><span>{formatCurrency(activeGoal.remainingAmount)} left</span></div>
+                <Link to="/goals" className="panel-footer-link">Open goals <PiArrowRightBold /></Link>
+              </>
+            ) : future90 && Number(future90.projectedMoneySaved || 0) + Number(future90.projectedMinutesRecovered || 0) > 0 ? (
+              <>
+                <span className="section-label">Future Me</span>
+                <h2>90-day snapshot</h2>
+                <div className="overview-forward-stat"><strong>{formatCurrency(future90.projectedMoneySaved)}</strong><span>{formatMinutes(future90.projectedMinutesRecovered)} recovered</span></div>
+                <Link to="/future-me" className="panel-footer-link">See projection <PiArrowRightBold /></Link>
+              </>
+            ) : (
+              <>
+                <span className="section-label">Next layer</span>
+                <h2>Turn saved effort into a goal</h2>
+                <p>Add an impact-enabled habit, then connect the return to a savings goal.</p>
+                <Link to="/goals" className="panel-footer-link">Open goals <PiArrowRightBold /></Link>
+              </>
+            )}
+          </aside>
+        </div>
       </section>
     </main>
   );

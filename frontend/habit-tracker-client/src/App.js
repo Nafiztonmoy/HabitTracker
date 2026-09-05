@@ -9,6 +9,8 @@ import Dashboard from "./pages/Dashboard";
 import Habits from "./pages/Habits";
 import LifeImpact from "./pages/LifeImpact";
 import Reports from "./pages/Reports";
+import Goals from "./pages/Goals";
+import FutureMe from "./pages/FutureMe";
 import "./App.css";
 
 const ProtectedRoute = ({ children }) => {
@@ -92,6 +94,8 @@ function App() {
             <Route path="/dashboard" element={protectedPage(<Dashboard />)} />
             <Route path="/habits" element={protectedPage(<Habits />)} />
             <Route path="/impact" element={protectedPage(<LifeImpact />)} />
+            <Route path="/goals" element={protectedPage(<Goals />)} />
+            <Route path="/future-me" element={protectedPage(<FutureMe />)} />
             <Route path="/reports" element={protectedPage(<Reports />)} />
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />

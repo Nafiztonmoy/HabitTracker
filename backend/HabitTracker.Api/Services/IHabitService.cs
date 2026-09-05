@@ -13,5 +13,7 @@ namespace HabitTracker.Services
         Task<IEnumerable<HabitLogResponse>> GetHabitLogsAsync(int habitId, int userId);
         Task<IEnumerable<WeeklyProgressResponse>> GetWeeklyProgressAsync(int userId);
         Task<ImpactSummaryResponse> GetImpactSummaryAsync(int userId);
+        Task<TimeBankResponse> GetTimeBankAsync(int userId);
+        Task<FutureMeProjectionResponse> GetFutureMeProjectionAsync(int userId);
     }
 }
